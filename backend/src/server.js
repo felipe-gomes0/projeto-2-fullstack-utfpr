@@ -8,6 +8,7 @@ const { tratadorDeErros, rotaNaoEncontrada } = require('./middlewares/errorHandl
 
 const authRoutes = require('./routes/authRoutes');
 const categoriaRoutes = require('./routes/categoriaRoutes');
+const fonteDestinoRoutes = require('./routes/fonteDestinoRoutes');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRoutes);
 
 // Todas as demais rotas sob /api exigem token
 app.use('/api/categorias', autenticar, categoriaRoutes);
+app.use('/api/fontes-destinos', autenticar, fonteDestinoRoutes);
 
 app.use(rotaNaoEncontrada);
 app.use(tratadorDeErros);
