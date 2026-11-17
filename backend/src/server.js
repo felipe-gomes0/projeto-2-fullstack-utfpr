@@ -7,6 +7,7 @@ const { autenticar } = require('./middlewares/auth');
 const { tratadorDeErros, rotaNaoEncontrada } = require('./middlewares/errorHandler');
 
 const authRoutes = require('./routes/authRoutes');
+const categoriaRoutes = require('./routes/categoriaRoutes');
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.get('/api/status', async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 
 // Todas as demais rotas sob /api exigem token
+app.use('/api/categorias', autenticar, categoriaRoutes);
 
 app.use(rotaNaoEncontrada);
 app.use(tratadorDeErros);
