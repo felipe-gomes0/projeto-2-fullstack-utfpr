@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes');
 const categoriaRoutes = require('./routes/categoriaRoutes');
 const fonteDestinoRoutes = require('./routes/fonteDestinoRoutes');
 const lancamentoRoutes = require('./routes/lancamentoRoutes');
+const relatorioRoutes = require('./routes/relatorioRoutes');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/categorias', autenticar, categoriaRoutes);
 app.use('/api/fontes-destinos', autenticar, fonteDestinoRoutes);
 app.use('/api/lancamentos', autenticar, lancamentoRoutes);
+app.use('/api/relatorios', autenticar, relatorioRoutes);
 
 app.use(rotaNaoEncontrada);
 app.use(tratadorDeErros);
