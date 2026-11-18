@@ -15,8 +15,6 @@ Enunciado: <https://costasilvati.github.io/fullStack/projeto-2.html>
 | Front-end | React 18 + Vite 5, React Router 6, Context API, Recharts (gráficos), `fetch` encapsulado em um cliente HTTP único |
 | Testes | `node:test` (regras de fatura, parcelamento, CPF e valores) |
 
-> ⚠️ Conforme o enunciado, o banco (**PostgreSQL**) e as bibliotecas `cors` e `recharts` precisam ser comunicados/aprovados pelo professor antes da entrega.
-
 ---
 
 ## Estrutura
