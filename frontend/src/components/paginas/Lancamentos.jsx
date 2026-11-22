@@ -11,11 +11,32 @@ import { AlertaSucesso, Carregando, MensagemErro, Vazio } from '../ui/Estados';
 import LancamentoForm from './LancamentoForm';
 
 const FILTROS_VAZIOS = { tipo: '', categoriaId: '', fonteDestinoId: '', busca: '' };
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+const ID = /^\d+$/;
+
+/**
+ * Lê período e filtros iniciais da URL (ex.: `?fonteDestinoId=3&inicio=2025-01-01&fim=2029-12-31`).
+ * @param {URLSearchParams} params
+ * @returns {{ periodo: { inicio: string, fim: string }, filtros: Object }}
+ */
+function estadoInicialDaUrl(params) {
+  const inicio = params.get('inicio');
+  const fim = params.get('fim');
+  const periodo = DATA_ISO.test(inicio || '') && DATA_ISO.test(fim || '') && inicio <= fim
+    ? { inicio, fim }
+    : limitesDoMes(mesAtual());
+  const filtros = { ...FILTROS_VAZIOS };
+  for (const campo of ['categoriaId', 'fonteDestinoId']) {
+    if (ID.test(params.get(campo) || '')) filtros[campo] = params.get(campo);
+  }
+  return { periodo, filtros };
+}
 
 export default function Lancamentos() {
   const [params, setParams] = useSearchParams();
-  const [periodo, setPeriodo] = useState(limitesDoMes(mesAtual()));
-  const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
+  const [inicial] = useState(() => estadoInicialDaUrl(params));
+  const [periodo, setPeriodo] = useState(inicial.periodo);
+  const [filtros, setFiltros] = useState(inicial.filtros);
   const [busca, setBusca] = useState('');
   const [pagina, setPagina] = useState(1);
   const [formAberto, setFormAberto] = useState(params.get('novo') === '1');

@@ -201,6 +201,13 @@ button, input, select { font: inherit; color: inherit; }
 .modal-cabecalho h2 { margin: 0; }
 .modal-corpo { padding: 18px 20px 20px; }
 .confirmacao-texto { margin: 0 0 14px; }
+.confirmacao-texto p { margin: 0 0 10px; }
+.lista-opcoes { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.lista-opcoes li {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border: 1px solid var(--cor-borda); border-radius: 8px; font-size: 0.9rem;
+}
+@media (max-width: 480px) { .lista-opcoes li { flex-direction: column; align-items: flex-start; } }
 
 .paginacao { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .paginacao-info { color: var(--cor-texto-suave); font-size: 0.86rem; margin: 10px 0 0; }

@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { api } from '../../services/api';
 import { useRequisicao } from '../../services/useRequisicao';
+import { periodoAmplo } from '../../services/formatadores';
 import Modal from '../ui/Modal';
 import ExcluirComMover from '../ui/ExcluirComMover';
 import { CampoSelect, CampoTexto } from '../ui/Campo';
 import { AlertaErro, AlertaSucesso, Carregando, MensagemErro, Vazio } from '../ui/Estados';
 
-function CategoriaForm({ inicial, aoSalvar, aoCancelar }) {
-  const [form, setForm] = useState({ nome: inicial?.nome || '', tipo: inicial?.tipo || 'saida' });
+function CategoriaForm({ inicial, tipoPadrao, aoSalvar, aoCancelar }) {
+  const [form, setForm] = useState({ nome: inicial?.nome || '', tipo: inicial?.tipo || tipoPadrao || 'saida' });
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -114,8 +115,14 @@ export default function Categorias() {
         {form && (
           <CategoriaForm
             inicial={form.inicial}
-            aoCancelar={() => setForm(null)}
-            aoSalvar={() => { setSucesso(form.inicial ? 'Categoria atualizada.' : 'Categoria criada.'); setForm(null); recarregar(); }}
+            tipoPadrao={form.tipoPadrao}
+            aoCancelar={() => { setForm(null); if (form.retomarExclusao) setExcluindo(form.retomarExclusao); }}
+            aoSalvar={() => {
+              setSucesso(form.inicial ? 'Categoria atualizada.' : 'Categoria criada.');
+              setForm(null);
+              recarregar();
+              if (form.retomarExclusao) setExcluindo(form.retomarExclusao);
+            }}
           />
         )}
       </Modal>
@@ -123,6 +130,12 @@ export default function Categorias() {
       <ExcluirComMover
         registro={excluindo}
         rotuloEntidade="categoria"
+        descricaoDestino={`outra categoria de ${excluindo?.tipo === 'entrada' ? 'entrada' : 'saída'}`}
+        aoCriarDestino={() => {
+          setForm({ inicial: null, tipoPadrao: excluindo.tipo, retomarExclusao: excluindo });
+          setExcluindo(null);
+        }}
+        linkLancamentos={excluindo ? `/lancamentos?${new URLSearchParams({ categoriaId: excluindo.id, ...periodoAmplo() })}` : undefined}
         opcoesDestino={(dados || []).filter((c) => excluindo && c.tipo === excluindo.tipo && c.id !== excluindo.id)}
         aoFechar={() => setExcluindo(null)}
         excluir={async (moverPara) => {

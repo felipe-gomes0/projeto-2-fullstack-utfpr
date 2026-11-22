@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import { AlertaErro } from './Estados';
 
 /**
  * Diálogo de exclusão que solicita um destino para mover lançamentos vinculados quando necessário.
+ * Sem destino compatível, explica as alternativas: criar um destino ou excluir os lançamentos antes.
  * @param {Object} props
  * @param {{ id: number, nome: string, totalLancamentos?: number } | null} props.registro
  * @param {string} props.rotuloEntidade
+ * @param {string} props.descricaoDestino Destino aceito, ex.: "outra categoria de saída".
  * @param {Array<{ id: number, nome: string }>} props.opcoesDestino
  * @param {(moverParaId: number|null) => Promise<void>} props.excluir
  * @param {() => void} props.aoFechar
+ * @param {() => void} [props.aoCriarDestino] Abre o formulário de criação de um destino.
+ * @param {string} [props.linkLancamentos] Endereço da lista de lançamentos já filtrada pelo registro.
  */
-export default function ExcluirComMover({ registro, rotuloEntidade, opcoesDestino, excluir, aoFechar }) {
+export default function ExcluirComMover({
+  registro, rotuloEntidade, descricaoDestino, opcoesDestino, excluir, aoFechar, aoCriarDestino, linkLancamentos,
+}) {
   const [destino, setDestino] = useState('');
   const [erro, setErro] = useState('');
   const [precisaMover, setPrecisaMover] = useState(false);
@@ -24,6 +31,8 @@ export default function ExcluirComMover({ registro, rotuloEntidade, opcoesDestin
   }, [registro]);
 
   if (!registro) return null;
+
+  const semDestino = precisaMover && opcoesDestino.length === 0;
 
   async function confirmar() {
     if (precisaMover && !destino) {
@@ -45,37 +54,58 @@ export default function ExcluirComMover({ registro, rotuloEntidade, opcoesDestin
   return (
     <Modal titulo={`Excluir ${rotuloEntidade}`} aberto aoFechar={aoFechar} largura={480}>
       <AlertaErro mensagem={erro} />
-      {!precisaMover ? (
+      {!precisaMover && (
         <p className="confirmacao-texto">Tem certeza que deseja excluir <strong>{registro.nome}</strong>?</p>
-      ) : (
+      )}
+      {precisaMover && !semDestino && (
         <>
           <p className="confirmacao-texto">
             <strong>{registro.nome}</strong> possui {registro.totalLancamentos || 'alguns'} lançamento(s).
             Para excluir, escolha para onde movê-los:
           </p>
-          {opcoesDestino.length === 0 ? (
-            <p className="nota">Não há outro(a) {rotuloEntidade} compatível. Crie um(a) antes de excluir.</p>
-          ) : (
-            <div className="campo">
-              <label htmlFor="mover-para">Mover lançamentos para</label>
-              <select id="mover-para" value={destino} onChange={(e) => setDestino(e.target.value)}>
-                <option value="">Selecione...</option>
-                {opcoesDestino.map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
-              </select>
-            </div>
-          )}
+          <div className="campo">
+            <label htmlFor="mover-para">Mover lançamentos para</label>
+            <select id="mover-para" value={destino} onChange={(e) => setDestino(e.target.value)}>
+              <option value="">Selecione...</option>
+              {opcoesDestino.map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
+            </select>
+          </div>
         </>
       )}
+      {semDestino && (
+        <div className="confirmacao-texto">
+          <p>
+            <strong>{registro.nome}</strong> possui {registro.totalLancamentos || 'alguns'} lançamento(s) e
+            não pode ser excluída enquanto eles existirem. Também não há {descricaoDestino} para recebê-los.
+          </p>
+          <p>Para excluir, escolha uma das opções:</p>
+          <ul className="lista-opcoes">
+            {aoCriarDestino && (
+              <li>
+                <strong>Criar {descricaoDestino}</strong> e mover os lançamentos para lá.
+                <button type="button" className="botao botao-secundario botao-pequeno" onClick={aoCriarDestino}>
+                  Criar {rotuloEntidade}
+                </button>
+              </li>
+            )}
+            {linkLancamentos && (
+              <li>
+                <strong>Excluir os lançamentos</strong> primeiro e depois voltar aqui.
+                <Link to={linkLancamentos} className="botao botao-secundario botao-pequeno">Ver lançamentos</Link>
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
       <div className="acoes-form">
-        <button type="button" className="botao botao-secundario" onClick={aoFechar}>Cancelar</button>
-        <button
-          type="button"
-          className="botao botao-perigo"
-          onClick={confirmar}
-          disabled={enviando || (precisaMover && opcoesDestino.length === 0)}
-        >
-          {precisaMover ? 'Mover e excluir' : 'Excluir'}
+        <button type="button" className="botao botao-secundario" onClick={aoFechar}>
+          {semDestino ? 'Fechar' : 'Cancelar'}
         </button>
+        {!semDestino && (
+          <button type="button" className="botao botao-perigo" onClick={confirmar} disabled={enviando}>
+            {precisaMover ? 'Mover e excluir' : 'Excluir'}
+          </button>
+        )}
       </div>
     </Modal>
   );

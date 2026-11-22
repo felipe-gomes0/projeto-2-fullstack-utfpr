@@ -64,6 +64,19 @@ export function somarMesesRef(ref, n) {
 }
 
 /**
+ * Período amplo (2 anos para trás e ~3 anos para frente, dentro do limite de 5 anos da API),
+ * usado para encontrar todos os lançamentos de uma categoria ou fonte/destino, incluindo parcelas futuras.
+ * @returns {{ inicio: string, fim: string }}
+ */
+export function periodoAmplo() {
+  const ref = mesAtual();
+  return {
+    inicio: limitesDoMes(somarMesesRef(ref, -24)).inicio,
+    fim: limitesDoMes(somarMesesRef(ref, 35)).fim,
+  };
+}
+
+/**
  * Aplica máscara de CPF (`000.000.000-00`), aceitando digitação parcial.
  * @param {string} valor
  * @returns {string}

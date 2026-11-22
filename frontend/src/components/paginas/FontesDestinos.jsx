@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { api } from '../../services/api';
 import { useRequisicao } from '../../services/useRequisicao';
-import { NOMES_TIPO_FONTE, moeda, numeroParaMoeda } from '../../services/formatadores';
+import { NOMES_TIPO_FONTE, moeda, numeroParaMoeda, periodoAmplo } from '../../services/formatadores';
 import Modal from '../ui/Modal';
 import ExcluirComMover from '../ui/ExcluirComMover';
 import { CampoMoeda, CampoSelect, CampoTexto } from '../ui/Campo';
 import { AlertaErro, AlertaSucesso, Carregando, MensagemErro, Vazio } from '../ui/Estados';
 
-function FonteForm({ inicial, aoSalvar, aoCancelar }) {
+function FonteForm({ inicial, tipoPadrao, aoSalvar, aoCancelar }) {
   const [form, setForm] = useState({
     nome: inicial?.nome || '',
-    tipo: inicial?.tipo || 'conta',
+    tipo: inicial?.tipo || tipoPadrao || 'conta',
     diaFechamento: inicial?.diaFechamento ? String(inicial.diaFechamento) : '',
     diaVencimento: inicial?.diaVencimento ? String(inicial.diaVencimento) : '',
     limite: inicial?.limite !== null && inicial?.limite !== undefined ? numeroParaMoeda(inicial.limite) : '',
@@ -149,8 +149,14 @@ export default function FontesDestinos() {
         {form && (
           <FonteForm
             inicial={form.inicial}
-            aoCancelar={() => setForm(null)}
-            aoSalvar={() => { setSucesso(form.inicial ? 'Registro atualizado.' : 'Registro criado.'); setForm(null); recarregar(); }}
+            tipoPadrao={form.tipoPadrao}
+            aoCancelar={() => { setForm(null); if (form.retomarExclusao) setExcluindo(form.retomarExclusao); }}
+            aoSalvar={() => {
+              setSucesso(form.inicial ? 'Registro atualizado.' : 'Registro criado.');
+              setForm(null);
+              recarregar();
+              if (form.retomarExclusao) setExcluindo(form.retomarExclusao);
+            }}
           />
         )}
       </Modal>
@@ -158,6 +164,12 @@ export default function FontesDestinos() {
       <ExcluirComMover
         registro={excluindo}
         rotuloEntidade="fonte/destino"
+        descricaoDestino={excluindo?.tipo === 'cartao_credito' ? 'outro cartão de crédito' : 'outra fonte/destino'}
+        aoCriarDestino={() => {
+          setForm({ inicial: null, tipoPadrao: excluindo.tipo === 'cartao_credito' ? 'cartao_credito' : 'conta', retomarExclusao: excluindo });
+          setExcluindo(null);
+        }}
+        linkLancamentos={excluindo ? `/lancamentos?${new URLSearchParams({ fonteDestinoId: excluindo.id, ...periodoAmplo() })}` : undefined}
         opcoesDestino={(dados || []).filter((f) => excluindo && f.id !== excluindo.id
           && (excluindo.tipo !== 'cartao_credito' || f.tipo === 'cartao_credito'))}
         aoFechar={() => setExcluindo(null)}
