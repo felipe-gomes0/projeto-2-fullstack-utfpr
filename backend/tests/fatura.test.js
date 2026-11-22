@@ -1,4 +1,3 @@
-// Testes das regras de fatura e parcelamento (node --test)
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
 process.env.DB_USER = process.env.DB_USER || 'teste';
 process.env.DB_NAME = process.env.DB_NAME || 'teste';
@@ -33,11 +32,9 @@ test('Visa: parcela 3/3 de compra em 20/12/2026 cai na fatura 03/2027', () => {
 });
 
 test('dias inexistentes são ajustados para o último dia do mês', () => {
-  // fecha dia 31, vence dia 8: em fevereiro o fechamento vira dia 28
   assert.deepStrictEqual(calcularFatura('2027-02-10', 31, 8), {
     referencia: '2027-03', fechamento: '2027-02-28', vencimento: '2027-03-08',
   });
-  // compra em 28/02 (= dia do fechamento ajustado) vai para a fatura seguinte
   assert.strictEqual(calcularFatura('2027-02-28', 31, 8).fechamento, '2027-03-31');
   assert.strictEqual(datas.somarMeses('2027-01-31', 1), '2027-02-28');
 });

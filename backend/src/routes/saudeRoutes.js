@@ -1,6 +1,3 @@
-// Desafio - Saúde financeira: /api/saude-financeira (exige token)
-// Indicadores calculados no back-end com regras documentadas no README.
-// Conteúdo educativo; não é recomendação financeira profissional.
 const express = require('express');
 const Relatorio = require('../models/relatorioModel');
 const { montarFaturas } = require('../models/fatura');
@@ -12,10 +9,9 @@ const router = express.Router();
 const AVISO = 'Conteúdo educativo, gerado automaticamente a partir dos seus lançamentos. '
   + 'Não constitui recomendação financeira profissional.';
 
-// Categorias consideradas "necessidades" na regra 50/30/20 (as demais saídas são "desejos")
 const NECESSIDADES = ['moradia', 'alimentação', 'alimentacao', 'saúde', 'saude', 'mobilidade', 'educação', 'educacao', 'transporte', 'contas'];
 
-const MESES_BASE = 3; // média dos últimos 3 meses completos
+const MESES_BASE = 3;
 const MESES_PROJECAO = 6;
 
 const pct = (parte, total) => (total > 0 ? Math.round((parte / total) * 1000) / 10 : null);
@@ -49,7 +45,6 @@ router.get('/', capturar(async (req, res) => {
     Relatorio.lancamentosDeCartoes(usuarioId),
   ]);
 
-  // ---- médias mensais da base (sempre divididas por 3 meses) ----
   const soma = (campo) => mensais.reduce((s, m) => s + m[campo], 0);
   const rendaMedia = Math.round(soma('entradas') / MESES_BASE);
   const despesaMedia = Math.round(soma('saidas') / MESES_BASE);
@@ -58,7 +53,6 @@ router.get('/', capturar(async (req, res) => {
 
   const indicadores = [];
 
-  // 1) Taxa de poupança
   const taxaPoupanca = pct(rendaMedia - despesaMedia, rendaMedia);
   indicadores.push({
     chave: 'taxa_poupanca',
@@ -69,7 +63,6 @@ router.get('/', capturar(async (req, res) => {
     descricao: 'Quanto da renda média mensal (últimos 3 meses) sobra depois das despesas. Referência: 20% ou mais.',
   });
 
-  // 2) Comprometimento com cartões (próximas faturas a vencer / renda média)
   let proximasFaturas = 0;
   let limiteTotal = 0;
   let limiteUtilizado = 0;
@@ -95,7 +88,6 @@ router.get('/', capturar(async (req, res) => {
     },
   });
 
-  // 3) Parcelas futuras já contratadas (após o mês atual)
   const totalParcelasFuturas = parcelasFuturas.reduce((s, p) => s + p.total, 0);
   const proximoMes = parcelasFuturas[0] ? parcelasFuturas[0].total : 0;
   const comprometimentoParcelas = pct(proximoMes, rendaMedia);
@@ -113,7 +105,6 @@ router.get('/', capturar(async (req, res) => {
     },
   });
 
-  // 4) Regra 50/30/20 (base: últimos 3 meses)
   const base = porCategoria.filter((c) => c.mes < inicioMesAtual.slice(0, 7));
   let necessidades = 0;
   let desejos = 0;
@@ -139,7 +130,6 @@ router.get('/', capturar(async (req, res) => {
     descricao: 'Referência: até 50% da renda em necessidades, até 30% em desejos e ao menos 20% guardado.',
   });
 
-  // 5) Reserva de emergência (meses de despesas cobertos pelo saldo acumulado)
   const mesesReserva = despesaMedia > 0 ? Math.round((saldoAtual / despesaMedia) * 10) / 10 : null;
   indicadores.push({
     chave: 'reserva_emergencia',
@@ -151,7 +141,6 @@ router.get('/', capturar(async (req, res) => {
     detalhes: { saldoAcumulado: paraReais(saldoAtual), despesaMedia: paraReais(despesaMedia) },
   });
 
-  // 6) Categorias fora da curva (mês atual x média dos 3 meses anteriores)
   const mediaPorCategoria = new Map();
   for (const c of base) {
     mediaPorCategoria.set(c.categoria_nome, (mediaPorCategoria.get(c.categoria_nome) || 0) + c.total / MESES_BASE);
@@ -179,8 +168,6 @@ router.get('/', capturar(async (req, res) => {
     detalhes: foraDaCurva,
   });
 
-  // ---- Projeção de saldo (próximos 6 meses) ----
-  // saldo(m) = saldo(m-1) + renda média - despesas médias à vista - parcelas já contratadas do mês
   const parcelasPorMes = new Map(parcelasFuturas.map((p) => [p.mes, p.total]));
   const despesaAVista = Math.max(0, despesaMedia - despesaParceladaMedia);
   const projecao = [{ mes: hoje.slice(0, 7), saldo: paraReais(saldoAtual), entradas: null, saidas: null, real: true }];
@@ -200,7 +187,6 @@ router.get('/', capturar(async (req, res) => {
     });
   }
 
-  // ---- Dicas baseadas em regras ----
   const dicas = [];
   const status = Object.fromEntries(indicadores.map((i) => [i.chave, i.status]));
   if (!temDados) {

@@ -1,4 +1,3 @@
-// Rotas de relatórios: /api/relatorios (todas exigem token)
 const express = require('express');
 const Relatorio = require('../models/relatorioModel');
 const { montarFaturas } = require('../models/fatura');
@@ -7,16 +6,27 @@ const { inteiro, paraReais, datas } = require('../middlewares/validacao');
 
 const router = express.Router();
 
-/** Percentual com 2 casas; 0 quando o total é 0 */
+/**
+ * Calcula o percentual de `parte` sobre `total` com duas casas decimais.
+ * @param {number} parte
+ * @param {number} total
+ * @returns {number}
+ */
 const percentual = (parte, total) => (total > 0 ? Math.round((parte / total) * 10000) / 100 : 0);
 
-/** Variação percentual entre períodos; null quando não há base de comparação */
+/**
+ * Calcula a variação percentual entre o período atual e o anterior.
+ * @param {number} atual
+ * @param {number} anterior
+ * @returns {number|null} Variação percentual ou `null` quando não há base de comparação.
+ */
 const variacao = (atual, anterior) => (anterior > 0 ? Math.round(((atual - anterior) / anterior) * 10000) / 100 : null);
 
 /**
- * Período anterior de mesmo tamanho, imediatamente antes do atual.
- * Se o período for formado por meses inteiros (ex.: 01/11 a 30/11), o anterior
- * também é de meses inteiros (01/10 a 31/10); caso contrário, usa o mesmo número de dias.
+ * Calcula o período imediatamente anterior com o mesmo tamanho do período informado.
+ * Quando formado por meses inteiros, retorna o mesmo número de meses inteiros; caso contrário, o mesmo número de dias.
+ * @param {{ inicio: string, fim: string }} periodo
+ * @returns {{ inicio: string, fim: string, dias: number|null }}
  */
 function periodoAnterior({ inicio, fim }) {
   const mesesInteiros = inicio === datas.inicioDoMes(inicio) && fim === datas.fimDoMes(fim);
@@ -32,10 +42,6 @@ function periodoAnterior({ inicio, fim }) {
   return { inicio: datas.somarDias(fimAnterior, -(dias - 1)), fim: fimAnterior, dias };
 }
 
-/**
- * GET /api/relatorios/categorias?inicio=&fim=
- * RF7: totais por categoria, % sobre o total (ordem decrescente) e comparação com o período anterior.
- */
 router.get('/categorias', capturar(async (req, res) => {
   const periodo = datas.periodoDaQuery(req.query);
   const anterior = periodoAnterior(periodo);
@@ -77,10 +83,6 @@ router.get('/categorias', capturar(async (req, res) => {
   });
 }));
 
-/**
- * GET /api/relatorios/fontes-destinos?inicio=&fim=
- * RF8: entradas por fonte, saídas por destino e saldo por conta.
- */
 router.get('/fontes-destinos', capturar(async (req, res) => {
   const periodo = datas.periodoDaQuery(req.query);
   const linhas = await Relatorio.totaisPorFonteDestino(req.usuarioId, periodo);
@@ -113,10 +115,6 @@ router.get('/fontes-destinos', capturar(async (req, res) => {
   });
 }));
 
-/**
- * GET /api/relatorios/faturas?meses=3[&cartaoId=]
- * RF9: fatura atual + próximas `meses` faturas de cada cartão (1 a 12).
- */
 router.get('/faturas', capturar(async (req, res) => {
   const meses = req.query.meses === undefined ? 3 : inteiro(req.query.meses);
   if (meses === null || meses < 1 || meses > 12) {

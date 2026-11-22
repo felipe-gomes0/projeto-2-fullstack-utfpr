@@ -1,4 +1,3 @@
-// Rotas de lançamentos: /api/lancamentos (todas exigem token)
 const express = require('express');
 const crypto = require('crypto');
 const Lancamento = require('../models/lancamentoModel');
@@ -12,7 +11,7 @@ const {
 const router = express.Router();
 const TIPOS = ['entrada', 'saida'];
 const MAX_PARCELAS = 48;
-const VALOR_MAXIMO_CENTAVOS = 100000000000; // R$ 1 bilhão
+const VALOR_MAXIMO_CENTAVOS = 100000000000;
 
 const formatar = (l) => ({
   id: l.id,
@@ -31,9 +30,11 @@ const formatar = (l) => ({
 });
 
 /**
- * Divide um valor (em centavos) em N parcelas inteiras.
- * A diferença de arredondamento vai para a PRIMEIRA parcela.
- * Ex.: 10000 em 3 -> [3334, 3333, 3333]
+ * Divide um valor total em centavos em `n` parcelas inteiras, atribuindo
+ * eventual diferença de arredondamento à primeira parcela.
+ * @param {number} totalCentavos
+ * @param {number} n
+ * @returns {Array<number>}
  */
 function dividirEmParcelas(totalCentavos, n) {
   const base = Math.floor(totalCentavos / n);
@@ -42,8 +43,12 @@ function dividirEmParcelas(totalCentavos, n) {
 }
 
 /**
- * Valida os campos comuns (criação e edição) e confere se categoria e
- * fonte/destino pertencem ao usuário logado.
+ * Valida os campos de criação ou edição de um lançamento e verifica se a categoria
+ * e a fonte/destino pertencem ao usuário autenticado.
+ * @param {number} usuarioId
+ * @param {Object} [corpo={}]
+ * @param {{ permitirParcelas: boolean }} opcoes
+ * @returns {Promise<Object>}
  */
 async function validarLancamento(usuarioId, corpo = {}, { permitirParcelas }) {
   const v = new Validador();
@@ -70,7 +75,6 @@ async function validarLancamento(usuarioId, corpo = {}, { permitirParcelas }) {
   }
   v.verificar();
 
-  // RF3: categoria e fonte/destino precisam ser do usuário do token
   const [categoria, fonte] = await Promise.all([
     Categoria.buscarPorId(categoriaId, usuarioId),
     FonteDestino.buscarPorId(fonteDestinoId, usuarioId),
@@ -95,11 +99,6 @@ async function validarLancamento(usuarioId, corpo = {}, { permitirParcelas }) {
   };
 }
 
-/**
- * GET /api/lancamentos
- * Filtros: inicio, fim (padrão: mês corrente), tipo, categoriaId, fonteDestinoId, busca
- * Paginação: pagina (1..), limite (1..100, padrão 20)
- */
 router.get('/', capturar(async (req, res) => {
   const { inicio, fim } = datas.periodoDaQuery(req.query);
   const filtros = {
@@ -133,7 +132,6 @@ router.get('/', capturar(async (req, res) => {
   });
 }));
 
-/** GET /api/lancamentos/:id (inclui as demais parcelas, se for parcelado) */
 router.get('/:id', capturar(async (req, res) => {
   const lancamento = await Lancamento.buscarPorId(idDaUrl(req.params.id), req.usuarioId);
   if (!lancamento) throw erros.naoEncontrado('Lançamento não encontrado.');
@@ -148,11 +146,6 @@ router.get('/:id', capturar(async (req, res) => {
   res.json(resposta);
 }));
 
-/**
- * POST /api/lancamentos -> 201
- * `valor` é o valor TOTAL. Com totalParcelas > 1 (somente cartão) cria uma linha por parcela,
- * todas com o mesmo grupo_parcelamento, dentro de uma transação.
- */
 router.post('/', capturar(async (req, res) => {
   const d = await validarLancamento(req.usuarioId, req.body, { permitirParcelas: true });
 
@@ -163,7 +156,6 @@ router.post('/', capturar(async (req, res) => {
     tipo: d.tipo,
     descricao: d.descricao,
     valorCentavos,
-    // competência da parcela k = data da compra + (k-1) meses (ajustando dias inexistentes)
     data: datas.somarMeses(d.data, i),
     dataCompra: d.data,
     categoriaId: d.categoriaId,
@@ -181,11 +173,6 @@ router.post('/', capturar(async (req, res) => {
   });
 }));
 
-/**
- * PUT /api/lancamentos/:id -> 200 | 400 | 404
- * Em parcelas, edita somente a parcela informada (descrição, valor e categoria).
- * Tipo, data e cartão de uma parcela não podem ser alterados isoladamente.
- */
 router.put('/:id', capturar(async (req, res) => {
   const id = idDaUrl(req.params.id);
   const atual = await Lancamento.buscarPorId(id, req.usuarioId);
@@ -221,9 +208,6 @@ router.put('/:id', capturar(async (req, res) => {
   res.json(formatar(atualizado));
 }));
 
-/**
- * DELETE /api/lancamentos/:id[?todasParcelas=true] -> 204 | 404
- */
 router.delete('/:id', capturar(async (req, res) => {
   const id = idDaUrl(req.params.id);
   const lancamento = await Lancamento.buscarPorId(id, req.usuarioId);

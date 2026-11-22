@@ -1,4 +1,3 @@
-// Rotas de fontes/destinos: /api/fontes-destinos (todas exigem token)
 const express = require('express');
 const FonteDestino = require('../models/fonteDestinoModel');
 const { erros, capturar } = require('../middlewares/errorHandler');
@@ -52,28 +51,24 @@ function validarCorpo(corpo = {}) {
   return { nome, tipo, diaFechamento, diaVencimento, limiteCentavos };
 }
 
-/** GET /api/fontes-destinos?tipo= */
 router.get('/', capturar(async (req, res) => {
   const tipo = TIPOS.includes(req.query.tipo) ? req.query.tipo : null;
   const fontes = await FonteDestino.listar(req.usuarioId, tipo);
   res.json(fontes.map(formatar));
 }));
 
-/** GET /api/fontes-destinos/:id */
 router.get('/:id', capturar(async (req, res) => {
   const fonte = await FonteDestino.buscarPorId(idDaUrl(req.params.id), req.usuarioId);
   if (!fonte) throw erros.naoEncontrado('Fonte/destino não encontrado.');
   res.json(formatar(fonte));
 }));
 
-/** POST /api/fontes-destinos -> 201 | 400 | 409 */
 router.post('/', capturar(async (req, res) => {
   const dados = validarCorpo(req.body);
   const fonte = await FonteDestino.criar(req.usuarioId, dados);
   res.status(201).json(formatar(fonte));
 }));
 
-/** PUT /api/fontes-destinos/:id -> 200 | 400 | 404 | 409 */
 router.put('/:id', capturar(async (req, res) => {
   const id = idDaUrl(req.params.id);
   const atual = await FonteDestino.buscarPorId(id, req.usuarioId);
@@ -92,7 +87,6 @@ router.put('/:id', capturar(async (req, res) => {
   res.json(formatar(fonte));
 }));
 
-/** DELETE /api/fontes-destinos/:id[?moverPara=ID] -> 204 | 404 | 409 */
 router.delete('/:id', capturar(async (req, res) => {
   const id = idDaUrl(req.params.id);
   const fonte = await FonteDestino.buscarPorId(id, req.usuarioId);
