@@ -143,7 +143,7 @@ async function gerarMovimentacao(ctx, perfil, semente) {
 async function main() {
   const { rows } = await query('SELECT COUNT(*) AS total FROM usuarios');
   if (Number(rows[0].total) > 0) {
-    console.log('O banco já possui usuários. Rode "npm run db:reset" para recriar tudo do zero.');
+    console.log('Seed ignorado: o banco já possui usuários. Para recriar tudo do zero, rode "npm run db:reset".');
     return;
   }
 
