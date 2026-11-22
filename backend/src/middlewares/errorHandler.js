@@ -69,6 +69,12 @@ function tratadorDeErros(erro, req, res, next) {
   if (erro.type === 'entity.parse.failed') {
     return res.status(400).json({ erro: 'JSON inválido no corpo da requisição.', campos: {} });
   }
+  if (erro.type === 'entity.too.large') {
+    return res.status(413).json({ erro: 'Corpo da requisição muito grande.', campos: {} });
+  }
+  if (erro.expose && erro.status >= 400 && erro.status < 500) {
+    return res.status(erro.status).json({ erro: 'Requisição inválida.', campos: {} });
+  }
 
   let appErro = erro instanceof AppError ? erro : traduzirErroBanco(erro);
 

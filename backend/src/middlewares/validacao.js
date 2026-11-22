@@ -90,6 +90,7 @@ function paraCentavos(valor) {
   if (typeof valor === 'number') {
     if (!Number.isFinite(valor)) return null;
     texto = valor.toFixed(2);
+    if (Math.abs(valor - Number(texto)) > 1e-9) return null;
   } else if (typeof valor === 'string') {
     texto = valor.replace(/R\$|\s/g, '');
     if (texto.includes(',')) {
