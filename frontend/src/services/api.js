@@ -1,20 +1,24 @@
-// Cliente HTTP único da aplicação (wrapper de fetch).
-// - injeta "Authorization: Bearer <token>" em todas as requisições
-// - ao receber 401 em uma requisição autenticada, executa o logout
-// - padroniza os erros no formato { status, mensagem, campos }
-
 const BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/$/, '');
 
 let obterToken = () => null;
 let aoNaoAutorizado = () => {};
 
-/** Chamado pelo AuthContext para ligar o cliente ao estado de autenticação */
+/**
+ * Conecta o cliente HTTP ao estado de autenticação.
+ * @param {{ obterToken: () => string|null, aoNaoAutorizado: () => void }} opcoes
+ * @returns {void}
+ */
 export function configurarApi(opcoes) {
   obterToken = opcoes.obterToken;
   aoNaoAutorizado = opcoes.aoNaoAutorizado;
 }
 
 export class ApiError extends Error {
+  /**
+   * @param {number} status Código HTTP da resposta (0 para falha de rede).
+   * @param {string} mensagem Mensagem geral do erro.
+   * @param {Object<string, string>} [campos={}] Mapa de erros por campo.
+   */
   constructor(status, mensagem, campos = {}) {
     super(mensagem);
     this.status = status;

@@ -1,21 +1,32 @@
-// Formatação (pt-BR), máscaras e validações do lado do cliente
-
 const moedaFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const numeroFmt = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const MESES_LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
-/** 1234.5 -> "R$ 1.234,50" */
+/**
+ * Formata um valor numérico como moeda brasileira (ex.: `1234.5` → `"R$ 1.234,50"`).
+ * @param {number|string} valor
+ * @returns {string}
+ */
 export const moeda = (valor) => moedaFmt.format(Number(valor) || 0);
 
-/** '2026-11-03' -> '03/11/2026' (sem conversão de fuso) */
+/**
+ * Converte uma data ISO `AAAA-MM-DD` para `DD/MM/AAAA` sem conversão de fuso horário.
+ * @param {string|null|undefined} iso
+ * @returns {string}
+ */
 export function dataBr(iso) {
   if (!iso) return '';
   const [a, m, d] = String(iso).slice(0, 10).split('-');
   return `${d}/${m}/${a}`;
 }
 
-/** '2026-11' -> 'nov/2026' */
+/**
+ * Formata uma referência `AAAA-MM` como mês e ano em português (ex.: `"nov/2026"`).
+ * @param {string|null|undefined} ref
+ * @param {boolean} [longo=false]
+ * @returns {string}
+ */
 export function mesAno(ref, longo = false) {
   if (!ref) return '';
   const [a, m] = ref.split('-').map(Number);
@@ -24,7 +35,6 @@ export function mesAno(ref, longo = false) {
 
 export const percentual = (v) => (v === null || v === undefined ? '—' : `${String(v).replace('.', ',')}%`);
 
-/* --------------------------- datas --------------------------- */
 const pad = (n) => String(n).padStart(2, '0');
 
 export function hojeIso() {
@@ -32,7 +42,11 @@ export function hojeIso() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Primeiro e último dia do mês de 'AAAA-MM' */
+/**
+ * Retorna o primeiro e o último dia do mês da referência `AAAA-MM`.
+ * @param {string} ref
+ * @returns {{ inicio: string, fim: string }}
+ */
 export function limitesDoMes(ref) {
   const [a, m] = ref.split('-').map(Number);
   const ultimo = new Date(a, m, 0).getDate();
@@ -49,8 +63,11 @@ export function somarMesesRef(ref, n) {
   return `${Math.floor(total / 12)}-${pad((total % 12) + 1)}`;
 }
 
-/* --------------------------- máscaras --------------------------- */
-/** "52998224725" -> "529.982.247-25" (aceita digitação parcial) */
+/**
+ * Aplica máscara de CPF (`000.000.000-00`), aceitando digitação parcial.
+ * @param {string} valor
+ * @returns {string}
+ */
 export function mascaraCpf(valor) {
   const d = String(valor || '').replace(/\D/g, '').slice(0, 11);
   return d
@@ -59,7 +76,11 @@ export function mascaraCpf(valor) {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
-/** Máscara de moeda baseada em centavos: "123456" -> "1.234,56" */
+/**
+ * Aplica máscara monetária baseada em centavos (ex.: `"123456"` → `"1.234,56"`).
+ * @param {string|number} valor
+ * @returns {string}
+ */
 export function mascaraMoeda(valor) {
   const digitos = String(valor ?? '').replace(/\D/g, '').replace(/^0+(?=\d)/, '');
   if (!digitos) return '';
@@ -67,23 +88,35 @@ export function mascaraMoeda(valor) {
   return numeroFmt.format(centavos / 100);
 }
 
-/** número em reais -> texto mascarado ("1.234,56") para preencher formulários */
+/**
+ * Converte número em reais para texto mascarado (`"1.234,56"`) para preenchimento de formulários.
+ * @param {number|string|null|undefined} n
+ * @returns {string}
+ */
 export const numeroParaMoeda = (n) => (n === null || n === undefined || n === '' ? '' : numeroFmt.format(Number(n)));
 
-/** "1.234,56" -> 123456 (centavos inteiros) */
+/**
+ * Converte texto monetário mascarado (`"1.234,56"`) em centavos inteiros (`123456`).
+ * @param {string} texto
+ * @returns {number}
+ */
 export function moedaParaCentavos(texto) {
   const d = String(texto || '').replace(/\D/g, '');
   return d ? Number(d) : 0;
 }
 
-/** Mesma regra do servidor: diferença de arredondamento na 1ª parcela */
+/**
+ * Divide um total em centavos em `n` parcelas inteiras, atribuindo eventual resto à primeira parcela.
+ * @param {number} totalCentavos
+ * @param {number} n
+ * @returns {Array<number>}
+ */
 export function dividirEmParcelas(totalCentavos, n) {
   if (!n || n < 1) return [];
   const base = Math.floor(totalCentavos / n);
   return Array.from({ length: n }, (_, i) => (i === 0 ? base + (totalCentavos - base * n) : base));
 }
 
-/* --------------------------- validações --------------------------- */
 export function cpfValido(valor) {
   const cpf = String(valor || '').replace(/\D/g, '');
   if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;

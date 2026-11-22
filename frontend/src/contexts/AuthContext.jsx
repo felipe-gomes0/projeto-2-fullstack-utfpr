@@ -1,5 +1,3 @@
-// Contexto de autenticação: usuário, token e funções login/logout/cadastrar.
-// O token é persistido no localStorage para sobreviver ao recarregamento da página.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api, configurarApi } from '../services/api';
 
@@ -8,7 +6,11 @@ const CHAVE_USUARIO = 'financas.usuario';
 
 const AuthContext = createContext(null);
 
-/** Lê a data de expiração (exp) do JWT, sem validar assinatura (isso é papel do servidor) */
+/**
+ * Lê o timestamp de expiração (`exp`) em milissegundos de um JWT, sem validar assinatura.
+ * @param {string} token
+ * @returns {number|null}
+ */
 function expiracaoDoToken(token) {
   try {
     const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
@@ -46,7 +48,6 @@ export function AuthProvider({ children }) {
     localStorage.setItem(CHAVE_USUARIO, JSON.stringify(novoUsuario));
   }, []);
 
-  /** Logout: o front apenas descarta o token */
   const logout = useCallback((mensagem = null) => {
     tokenRef.current = null;
     setToken(null);
@@ -56,14 +57,11 @@ export function AuthProvider({ children }) {
     setAviso(mensagem);
   }, []);
 
-  // liga o cliente HTTP ao contexto (token atual + logout automático no 401).
-  // Feito durante o render (e não em useEffect) para valer antes dos efeitos dos componentes filhos.
   configurarApi({
     obterToken: () => tokenRef.current,
     aoNaoAutorizado: () => logout('Sua sessão expirou. Entre novamente.'),
   });
 
-  // ao recarregar a página, confirma o token com o servidor
   useEffect(() => {
     if (!inicial.token) return;
     api.get('/auth/me')
@@ -76,7 +74,6 @@ export function AuthProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // logout automático quando o token expirar
   useEffect(() => {
     if (!token) return undefined;
     const exp = expiracaoDoToken(token);

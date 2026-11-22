@@ -1,9 +1,11 @@
-// Hook para carregar dados da API com estados de carregamento e erro
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
- * @param {Function} buscar função assíncrona que retorna os dados
- * @param {Array} dependencias recarrega quando mudarem
+ * Carrega dados assíncronos da API mantendo estados de carregamento e erro.
+ * @template T
+ * @param {() => Promise<T>} buscar Função assíncrona que retorna os dados.
+ * @param {Array<*>} [dependencias=[]] Lista de dependências que disparam novo carregamento.
+ * @returns {{ dados: T|null, carregando: boolean, erro: Error|null, recarregar: () => Promise<void>, setDados: Function }}
  */
 export function useRequisicao(buscar, dependencias = []) {
   const [dados, setDados] = useState(null);
