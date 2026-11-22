@@ -1,4 +1,3 @@
-// Acesso ao banco: lançamentos (sempre filtrando por usuario_id)
 const { query, transacao } = require('../config/db');
 
 const SELECT_BASE = `
@@ -11,7 +10,12 @@ const SELECT_BASE = `
     JOIN categorias c      ON c.id = l.categoria_id
     JOIN fontes_destinos f ON f.id = l.fonte_destino_id`;
 
-/** Monta o WHERE dinâmico (sempre parametrizado) a partir dos filtros */
+/**
+ * Monta a cláusula `WHERE` parametrizada a partir dos filtros informados.
+ * @param {number} usuarioId
+ * @param {{ inicio: string, fim: string, tipo?: string|null, categoriaId?: number|null, fonteDestinoId?: number|null, busca?: string|null }} filtros
+ * @returns {{ where: string, params: Array<*> }}
+ */
 function montarFiltros(usuarioId, filtros) {
   const condicoes = ['l.usuario_id = $1', 'l.data BETWEEN $2 AND $3'];
   const params = [usuarioId, filtros.inicio, filtros.fim];
@@ -29,7 +33,13 @@ function montarFiltros(usuarioId, filtros) {
   return { where: condicoes.join(' AND '), params };
 }
 
-/** Lista com filtros + paginação e calcula os totais do período filtrado */
+/**
+ * Lista lançamentos paginados aplicando os filtros e calcula os totais do período filtrado.
+ * @param {number} usuarioId
+ * @param {Object} filtros
+ * @param {{ pagina: number, limite: number }} paginacao
+ * @returns {Promise<{ itens: Array<Object>, totais: Object }>}
+ */
 async function listar(usuarioId, filtros, { pagina, limite }) {
   const { where, params } = montarFiltros(usuarioId, filtros);
 
@@ -69,9 +79,11 @@ async function listarDoGrupo(grupo, usuarioId) {
 }
 
 /**
- * Insere um lançamento simples ou todas as parcelas de uma compra parcelada.
- * Todas as linhas são gravadas na MESMA transação: ou entram todas, ou nenhuma.
+ * Insere um lançamento simples ou todas as parcelas de uma compra parcelada
+ * em uma única transação.
+ * @param {number} usuarioId
  * @param {Array<Object>} linhas
+ * @returns {Promise<Array<Object>>}
  */
 async function criarLinhas(usuarioId, linhas) {
   const ids = await transacao(async (client) => {

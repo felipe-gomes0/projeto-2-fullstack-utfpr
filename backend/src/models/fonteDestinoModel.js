@@ -1,4 +1,3 @@
-// Acesso ao banco: fontes/destinos (sempre filtrando por usuario_id)
 const { query, transacao } = require('../config/db');
 
 const SELECT_BASE = `
@@ -45,7 +44,14 @@ async function atualizar(id, usuarioId, dados) {
   return rowCount > 0 ? buscarPorId(id, usuarioId) : null;
 }
 
-/** Exclui; se `moverParaId` vier, move os lançamentos antes (transação) */
+/**
+ * Exclui a fonte/destino. Se `moverParaId` for informado, move antes os lançamentos
+ * para o destino dentro da mesma transação.
+ * @param {number} id
+ * @param {number} usuarioId
+ * @param {number|null} [moverParaId=null]
+ * @returns {Promise<boolean>}
+ */
 async function excluir(id, usuarioId, moverParaId = null) {
   return transacao(async (client) => {
     if (moverParaId) {
@@ -63,7 +69,12 @@ async function excluir(id, usuarioId, moverParaId = null) {
   });
 }
 
-/** Indica se há lançamentos parcelados (mais de 1 parcela) usando esta fonte */
+/**
+ * Indica se há lançamentos parcelados vinculados a esta fonte/destino.
+ * @param {number} id
+ * @param {number} usuarioId
+ * @returns {Promise<boolean>}
+ */
 async function possuiParcelados(id, usuarioId) {
   const { rows } = await query(
     `SELECT EXISTS (

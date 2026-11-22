@@ -1,4 +1,3 @@
-// Acesso ao banco: categorias (sempre filtrando por usuario_id)
 const { query, transacao } = require('../config/db');
 
 const SELECT_BASE = `
@@ -43,8 +42,12 @@ async function atualizar(id, usuarioId, { nome, tipo }) {
 }
 
 /**
- * Exclui a categoria. Se `moverParaId` for informado, antes move os lançamentos
- * para a outra categoria (tudo em uma transação).
+ * Exclui a categoria. Se `moverParaId` for informado, move antes os lançamentos
+ * para a categoria de destino dentro da mesma transação.
+ * @param {number} id
+ * @param {number} usuarioId
+ * @param {number|null} [moverParaId=null]
+ * @returns {Promise<boolean>}
  */
 async function excluir(id, usuarioId, moverParaId = null) {
   return transacao(async (client) => {

@@ -1,9 +1,11 @@
-// Acesso ao banco: consultas agregadas para relatórios, faturas e saúde financeira.
-// Agregações feitas no banco com GROUP BY / SUM.
 const { query } = require('../config/db');
 
 /**
- * RF7 - Totais por categoria no período atual e no período anterior (mesmo tamanho).
+ * Retorna totais agrupados por categoria no período atual e no período anterior.
+ * @param {number} usuarioId
+ * @param {{ inicio: string, fim: string }} periodo
+ * @param {{ inicio: string, fim: string }} anterior
+ * @returns {Promise<Array<Object>>}
  */
 async function totaisPorCategoria(usuarioId, periodo, anterior) {
   const { rows } = await query(
@@ -25,8 +27,10 @@ async function totaisPorCategoria(usuarioId, periodo, anterior) {
 }
 
 /**
- * RF8 - Entradas, saídas e saldo por fonte/destino no período,
- * além do saldo acumulado até o fim do período.
+ * Retorna entradas, saídas no período e saldo acumulado até o fim do período por fonte/destino.
+ * @param {number} usuarioId
+ * @param {{ inicio: string, fim: string }} periodo
+ * @returns {Promise<Array<Object>>}
  */
 async function totaisPorFonteDestino(usuarioId, periodo) {
   const { rows } = await query(
@@ -48,7 +52,11 @@ async function totaisPorFonteDestino(usuarioId, periodo) {
   return rows;
 }
 
-/** Cartões de crédito do usuário */
+/**
+ * Lista os cartões de crédito do usuário.
+ * @param {number} usuarioId
+ * @returns {Promise<Array<Object>>}
+ */
 async function cartoes(usuarioId) {
   const { rows } = await query(
     `SELECT id, nome, dia_fechamento, dia_vencimento, limite_centavos
@@ -60,7 +68,11 @@ async function cartoes(usuarioId) {
   return rows;
 }
 
-/** Lançamentos feitos em cartões (para montar as faturas) */
+/**
+ * Lista todos os lançamentos vinculados a cartões de crédito do usuário.
+ * @param {number} usuarioId
+ * @returns {Promise<Array<Object>>}
+ */
 async function lancamentosDeCartoes(usuarioId) {
   const { rows } = await query(
     `SELECT l.id, l.tipo, l.descricao, l.valor_centavos, l.data, l.data_compra,
@@ -76,7 +88,13 @@ async function lancamentosDeCartoes(usuarioId) {
   return rows;
 }
 
-/** Entradas e saídas agrupadas por mês (AAAA-MM) */
+/**
+ * Agrupa entradas, saídas e saídas parceladas por mês (`AAAA-MM`).
+ * @param {number} usuarioId
+ * @param {string} inicio Data inicial (`AAAA-MM-DD`).
+ * @param {string} fim Data final (`AAAA-MM-DD`).
+ * @returns {Promise<Array<Object>>}
+ */
 async function totaisMensais(usuarioId, inicio, fim) {
   const { rows } = await query(
     `SELECT to_char(l.data, 'YYYY-MM') AS mes,
@@ -92,7 +110,13 @@ async function totaisMensais(usuarioId, inicio, fim) {
   return rows;
 }
 
-/** Saídas por categoria e mês */
+/**
+ * Agrupa saídas por categoria e mês (`AAAA-MM`).
+ * @param {number} usuarioId
+ * @param {string} inicio Data inicial (`AAAA-MM-DD`).
+ * @param {string} fim Data final (`AAAA-MM-DD`).
+ * @returns {Promise<Array<Object>>}
+ */
 async function saidasPorCategoriaMensal(usuarioId, inicio, fim) {
   const { rows } = await query(
     `SELECT to_char(l.data, 'YYYY-MM') AS mes, c.id AS categoria_id, c.nome AS categoria_nome,
@@ -107,7 +131,12 @@ async function saidasPorCategoriaMensal(usuarioId, inicio, fim) {
   return rows;
 }
 
-/** Saldo acumulado (entradas - saídas) até uma data */
+/**
+ * Calcula o saldo acumulado (entradas menos saídas) até uma data.
+ * @param {number} usuarioId
+ * @param {string} ate Data limite (`AAAA-MM-DD`).
+ * @returns {Promise<number>} Saldo em centavos.
+ */
 async function saldoAcumulado(usuarioId, ate) {
   const { rows } = await query(
     `SELECT COALESCE(SUM(CASE WHEN tipo = 'entrada' THEN valor_centavos ELSE -valor_centavos END), 0) AS saldo
@@ -118,7 +147,12 @@ async function saldoAcumulado(usuarioId, ate) {
   return rows[0].saldo;
 }
 
-/** Parcelas futuras (já contratadas) agrupadas por mês, após uma data */
+/**
+ * Agrupa por mês as parcelas futuras já contratadas após uma data.
+ * @param {number} usuarioId
+ * @param {string} apos Data de corte (`AAAA-MM-DD`).
+ * @returns {Promise<Array<Object>>}
+ */
 async function parcelasFuturasPorMes(usuarioId, apos) {
   const { rows } = await query(
     `SELECT to_char(data, 'YYYY-MM') AS mes, SUM(valor_centavos) AS total, COUNT(*) AS quantidade

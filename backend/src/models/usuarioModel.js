@@ -1,4 +1,3 @@
-// Acesso ao banco: usuários
 const { query, transacao } = require('../config/db');
 
 const CATEGORIAS_PADRAO = [
@@ -20,10 +19,14 @@ const FONTES_PADRAO = [
   { nome: 'Salário mensal', tipo: 'renda' },
 ];
 
-// Nunca selecionamos senha_hash nas consultas que retornam dados ao cliente
 const CAMPOS_PUBLICOS = 'id, nome, email, cpf, criado_em';
 
-/** Verifica, antes do INSERT, quais campos únicos já estão em uso (o UNIQUE do banco é a garantia final) */
+/**
+ * Verifica quais campos únicos (`email`, `cpf`) já estão em uso.
+ * @param {string} email
+ * @param {string} cpf
+ * @returns {Promise<{ email: boolean, cpf: boolean }>}
+ */
 async function camposEmUso(email, cpf) {
   const { rows } = await query(
     `SELECT
@@ -34,7 +37,11 @@ async function camposEmUso(email, cpf) {
   return rows[0];
 }
 
-/** Cria o usuário com categorias e fontes/destinos padrão, tudo em uma transação */
+/**
+ * Cria o usuário junto com categorias e fontes/destinos padrão em uma única transação.
+ * @param {{ nome: string, email: string, cpf: string, senhaHash: string }} dados
+ * @returns {Promise<Object>}
+ */
 async function criarComPadroes({ nome, email, cpf, senhaHash }) {
   return transacao(async (client) => {
     const { rows } = await client.query(
@@ -61,7 +68,11 @@ async function criarComPadroes({ nome, email, cpf, senhaHash }) {
   });
 }
 
-/** Usado apenas no login (inclui o hash para comparação; nunca é enviado ao cliente) */
+/**
+ * Busca o usuário por e-mail incluindo `senha_hash` exclusivamente para verificação de login.
+ * @param {string} email
+ * @returns {Promise<Object|null>}
+ */
 async function buscarParaLogin(email) {
   const { rows } = await query(
     'SELECT id, nome, email, cpf, senha_hash FROM usuarios WHERE email = $1',
