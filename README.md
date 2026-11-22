@@ -14,6 +14,7 @@ Enunciado: <https://costasilvati.github.io/fullStack/projeto-2.html>
 | Back-end | Node.js 18+, Express 4, `pg` (pool de conexões), `bcrypt`, `jsonwebtoken`, `dotenv`, `express-rate-limit`, `cors` |
 | Front-end | React 18 + Vite 5, React Router 6, Context API, Recharts (gráficos), `fetch` encapsulado em um cliente HTTP único |
 | Testes | `node:test` (regras de fatura, parcelamento, CPF e valores) |
+| Ambiente | Docker e Docker Compose (PostgreSQL, API e front-end servido pelo nginx) |
 
 ---
 
@@ -33,14 +34,44 @@ Enunciado: <https://costasilvati.github.io/fullStack/projeto-2.html>
 │   │   ├── models/             # ÚNICA camada com acesso ao banco + regras de fatura
 │   │   └── routes/             # rotas com os controladores dentro
 │   ├── tests/                  # testes automatizados (node --test)
+│   ├── Dockerfile
 │   └── .env.example
-└── frontend/
-    ├── src/
-    │   ├── components/         # layout/, ui/ e paginas/
-    │   ├── contexts/           # AuthContext
-    │   └── services/           # api.js (cliente HTTP único), formatadores, hook de requisição
-    └── .env.example
+├── frontend/
+│   ├── src/
+│   │   ├── components/         # layout/, ui/ e paginas/
+│   │   ├── contexts/           # AuthContext
+│   │   └── services/           # api.js (cliente HTTP único), formatadores, hook de requisição
+│   ├── Dockerfile              # build com Vite + nginx
+│   ├── nginx.conf
+│   └── .env.example
+└── docker-compose.yml          # PostgreSQL + API + front-end
 ```
+
+---
+
+## Como executar com Docker
+
+Requer Docker com o Docker Compose. Na raiz do projeto:
+
+```bash
+docker compose up --build
+```
+
+| Serviço | Endereço |
+|---|---|
+| Front-end | http://localhost:5173 |
+| API | http://localhost:3001/api |
+| PostgreSQL | `localhost:5433` (usuário `postgres`, senha `postgres`, banco `financas`) |
+
+Na primeira subida o PostgreSQL executa o `schema.sql` e a API roda o seed (2 usuários com lançamentos de exemplo). Nas próximas, os dados são mantidos no volume `pgdata` e o seed é ignorado.
+
+| Comando | O que faz |
+|---|---|
+| `docker compose up -d --build` | sobe tudo em segundo plano |
+| `docker compose logs -f backend` | acompanha os logs da API |
+| `docker compose exec backend npm run db:reset` | recria as tabelas e roda o seed novamente |
+| `docker compose down` | para os contêineres (mantém os dados) |
+| `docker compose down -v` | para e apaga o banco |
 
 ---
 
