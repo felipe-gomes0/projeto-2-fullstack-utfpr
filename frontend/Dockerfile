@@ -1,4 +1,3 @@
-# Etapa 1: build da SPA
 FROM node:20-slim AS build
 
 WORKDIR /app
@@ -12,7 +11,6 @@ ARG VITE_API_URL=http://localhost:3001/api
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
-# Etapa 2: arquivos estáticos servidos pelo nginx
 FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
