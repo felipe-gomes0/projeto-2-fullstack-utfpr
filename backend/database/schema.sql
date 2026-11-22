@@ -1,19 +1,8 @@
--- =============================================================
--- Projeto 2 - Controle Financeiro Pessoal
--- Script de criação do banco (PostgreSQL 14+)
--- Executar com: npm run db:schema   (ou psql -f database/schema.sql)
--- =============================================================
-
 DROP TABLE IF EXISTS lancamentos;
 DROP TABLE IF EXISTS fontes_destinos;
 DROP TABLE IF EXISTS categorias;
 DROP TABLE IF EXISTS usuarios;
 
--- -------------------------------------------------------------
--- Usuários
--- E-mail é gravado em minúsculas e CPF só com dígitos (normalizados
--- na aplicação e garantidos aqui pelos CHECKs).
--- -------------------------------------------------------------
 CREATE TABLE usuarios (
     id          SERIAL PRIMARY KEY,
     nome        VARCHAR(120) NOT NULL CHECK (length(trim(nome)) >= 2),
@@ -23,25 +12,17 @@ CREATE TABLE usuarios (
     criado_em   TIMESTAMPTZ  NOT NULL DEFAULT now()
 );
 
--- -------------------------------------------------------------
--- Categorias (entrada/saida), nome único por usuário + tipo
--- -------------------------------------------------------------
 CREATE TABLE categorias (
     id          SERIAL PRIMARY KEY,
     usuario_id  INTEGER     NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     nome        VARCHAR(60) NOT NULL CHECK (length(trim(nome)) >= 1),
     tipo        VARCHAR(10) NOT NULL CHECK (tipo IN ('entrada', 'saida')),
     criado_em   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- permite FK composta (garante que o lançamento usa categoria do mesmo usuário)
     UNIQUE (id, usuario_id)
 );
--- unicidade sem diferenciar maiúsculas/minúsculas
 CREATE UNIQUE INDEX categorias_usuario_tipo_nome_uk
     ON categorias (usuario_id, tipo, lower(nome));
 
--- -------------------------------------------------------------
--- Fontes / destinos (renda, conta, cartão de crédito)
--- -------------------------------------------------------------
 CREATE TABLE fontes_destinos (
     id               SERIAL PRIMARY KEY,
     usuario_id       INTEGER     NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -52,7 +33,6 @@ CREATE TABLE fontes_destinos (
     limite_centavos  BIGINT      CHECK (limite_centavos >= 0),
     criado_em        TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (id, usuario_id),
-    -- cartão exige fechamento, vencimento e limite
     CHECK (
         tipo <> 'cartao_credito'
         OR (dia_fechamento IS NOT NULL AND dia_vencimento IS NOT NULL AND limite_centavos IS NOT NULL)
@@ -61,12 +41,6 @@ CREATE TABLE fontes_destinos (
 CREATE UNIQUE INDEX fontes_destinos_usuario_nome_uk
     ON fontes_destinos (usuario_id, lower(nome));
 
--- -------------------------------------------------------------
--- Lançamentos
--- valor em centavos (BIGINT), nunca float.
--- data        = data de competência (para parcela k: data da compra + (k-1) meses)
--- data_compra = data original da compra (base para cálculo da fatura)
--- -------------------------------------------------------------
 CREATE TABLE lancamentos (
     id                   SERIAL PRIMARY KEY,
     usuario_id           INTEGER      NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,

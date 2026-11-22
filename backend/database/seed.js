@@ -1,7 +1,3 @@
-// Seed: 2 usuários com cartões e ~4 meses de lançamentos (3 meses completos + mês atual),
-// incluindo compras parceladas. As datas são relativas à data de hoje, então o seed
-// sempre gera dados "recentes".
-// Uso: npm run db:seed   (rode antes npm run db:schema)
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const config = require('../src/config/env');
@@ -14,7 +10,6 @@ const { datas } = require('../src/middlewares/validacao');
 
 const SENHA_PADRAO = 'Senha123';
 
-// gerador pseudoaleatório determinístico (mesmo seed => mesmos dados)
 function criarAleatorio(semente) {
   let s = semente;
   return () => {
@@ -49,7 +44,19 @@ async function criarUsuario({ nome, email, cpf, cartoes, contas = [] }) {
   return { usuario, cat, fonte };
 }
 
-/** Lança um registro simples ou parcelado (mesma regra da API) */
+/**
+ * Insere um lançamento simples ou parcelado seguindo a mesma regra da API.
+ * @param {number} usuarioId
+ * @param {Object} dados
+ * @param {'entrada'|'saida'} dados.tipo
+ * @param {string} dados.descricao
+ * @param {number} dados.valor Valor total em centavos.
+ * @param {string} dados.data Data da compra no formato AAAA-MM-DD.
+ * @param {number} dados.categoriaId
+ * @param {number} dados.fonteDestinoId
+ * @param {number} [dados.parcelas=1]
+ * @returns {Promise<void>}
+ */
 async function lancar(usuarioId, { tipo, descricao, valor, data, categoriaId, fonteDestinoId, parcelas = 1 }) {
   const grupo = parcelas > 1 ? crypto.randomUUID() : null;
   const linhas = dividirEmParcelas(valor, parcelas).map((valorCentavos, i) => ({
@@ -68,7 +75,11 @@ async function lancar(usuarioId, { tipo, descricao, valor, data, categoriaId, fo
 }
 
 /**
- * Gera lançamentos de um usuário para os 3 meses anteriores e o mês atual (até hoje).
+ * Gera lançamentos de um usuário para os 3 meses anteriores e o mês atual até a data de hoje.
+ * @param {{ usuario: Object, cat: Function, fonte: Function }} ctx
+ * @param {Object} perfil
+ * @param {number} semente
+ * @returns {Promise<void>}
  */
 async function gerarMovimentacao(ctx, perfil, semente) {
   const { usuario, cat, fonte } = ctx;
@@ -77,7 +88,6 @@ async function gerarMovimentacao(ctx, perfil, semente) {
   const inicioMesAtual = datas.inicioDoMes(hoje);
   const varia = (valor, faixa = 0.25) => Math.round(valor * (1 - faixa + rand() * 2 * faixa));
 
-  // saldo inicial (4 meses atrás, fora da base de cálculo dos indicadores)
   await lancar(usuario.id, {
     tipo: 'entrada',
     descricao: 'Saldo inicial',
@@ -93,21 +103,18 @@ async function gerarMovimentacao(ctx, perfil, semente) {
     const dia = (d) => datas.criarData(ano, mes, d);
     const lancamentos = [];
 
-    // entradas
     lancamentos.push({ tipo: 'entrada', descricao: 'Salário', valor: perfil.salario, data: dia(5), categoriaId: cat('Salário', 'entrada'), fonteDestinoId: fonte('Conta corrente') });
     if (perfil.freela && rand() > 0.4) {
       lancamentos.push({ tipo: 'entrada', descricao: 'Projeto freelance', valor: varia(perfil.freela, 0.4), data: dia(18), categoriaId: cat('Freelance', 'entrada'), fonteDestinoId: fonte('Conta corrente') });
     }
     lancamentos.push({ tipo: 'entrada', descricao: 'Rendimento poupança', valor: varia(3500, 0.3), data: dia(28), categoriaId: cat('Rendimentos', 'entrada'), fonteDestinoId: fonte(perfil.contaReserva) });
 
-    // saídas fixas (conta)
     lancamentos.push({ tipo: 'saida', descricao: 'Aluguel', valor: perfil.aluguel, data: dia(10), categoriaId: cat('Moradia', 'saida'), fonteDestinoId: fonte('Conta corrente') });
     lancamentos.push({ tipo: 'saida', descricao: 'Conta de energia', valor: varia(18000), data: dia(12), categoriaId: cat('Moradia', 'saida'), fonteDestinoId: fonte('Conta corrente') });
     lancamentos.push({ tipo: 'saida', descricao: 'Internet', valor: 9990, data: dia(15), categoriaId: cat('Moradia', 'saida'), fonteDestinoId: fonte('Conta corrente') });
     lancamentos.push({ tipo: 'saida', descricao: 'Plano de saúde', valor: perfil.saude, data: dia(8), categoriaId: cat('Saúde', 'saida'), fonteDestinoId: fonte('Conta corrente') });
     lancamentos.push({ tipo: 'saida', descricao: 'Mensalidade curso', valor: perfil.educacao, data: dia(7), categoriaId: cat('Educação', 'saida'), fonteDestinoId: fonte('Conta corrente') });
 
-    // saídas variáveis (cartão)
     for (const d of [3, 11, 19, 26]) {
       lancamentos.push({ tipo: 'saida', descricao: 'Supermercado', valor: varia(perfil.mercado), data: dia(d), categoriaId: cat('Alimentação', 'saida'), fonteDestinoId: fonte(perfil.cartaoPrincipal) });
     }
@@ -124,7 +131,6 @@ async function gerarMovimentacao(ctx, perfil, semente) {
     }
   }
 
-  // compras parceladas (datas no passado; parcelas caem nos meses seguintes)
   for (const p of perfil.parcelados) {
     const data = datas.somarDias(datas.somarMeses(inicioMesAtual, p.mesesAtras), p.dia - 1);
     if (data > hoje) continue;
@@ -147,7 +153,6 @@ async function main() {
     return;
   }
 
-  // ---- Usuário 1 ----
   const ana = await criarUsuario({
     nome: 'Ana Souza',
     email: 'ana@exemplo.com',
@@ -178,7 +183,6 @@ async function main() {
     ],
   }, 42);
 
-  // ---- Usuário 2 ----
   const bruno = await criarUsuario({
     nome: 'Bruno Lima',
     email: 'bruno@exemplo.com',

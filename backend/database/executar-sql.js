@@ -1,6 +1,3 @@
-// Executa um arquivo .sql no banco configurado no .env.
-// Cria o banco (DB_NAME) automaticamente se ele ainda não existir.
-// Uso: node database/executar-sql.js database/schema.sql
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -18,7 +15,6 @@ async function garantirBanco() {
   try {
     const { rowCount } = await admin.query('SELECT 1 FROM pg_database WHERE datname = $1', [process.env.DB_NAME]);
     if (rowCount === 0) {
-      // nome de banco não aceita parâmetro; validamos o identificador antes
       if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(process.env.DB_NAME)) throw new Error('DB_NAME inválido');
       await admin.query(`CREATE DATABASE ${process.env.DB_NAME}`);
       console.log(`Banco "${process.env.DB_NAME}" criado.`);
