@@ -1,13 +1,24 @@
-// Middleware de autenticação JWT.
-// Lê "Authorization: Bearer <token>", valida e define req.usuarioId.
 const jwt = require('jsonwebtoken');
 const config = require('../config/env');
 const { erros } = require('./errorHandler');
 
+/**
+ * Gera um token JWT assinado para o usuário informado.
+ * @param {number} usuarioId
+ * @returns {string}
+ */
 function gerarToken(usuarioId) {
   return jwt.sign({ sub: String(usuarioId) }, config.jwt.segredo, { expiresIn: config.jwt.expiraEm });
 }
 
+/**
+ * Middleware de autenticação JWT.
+ * Valida o cabeçalho `Authorization: Bearer <token>` e define `req.usuarioId`.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {void}
+ */
 function autenticar(req, res, next) {
   const cabecalho = req.headers.authorization || '';
   const [esquema, token] = cabecalho.split(' ');
@@ -20,7 +31,7 @@ function autenticar(req, res, next) {
     const payload = jwt.verify(token, config.jwt.segredo);
     const id = Number(payload.sub);
     if (!Number.isInteger(id) || id <= 0) throw new Error('payload inválido');
-    req.usuarioId = id; // ÚNICA fonte do id do usuário em todas as rotas protegidas
+    req.usuarioId = id;
     return next();
   } catch (erro) {
     if (erro.name === 'TokenExpiredError') {

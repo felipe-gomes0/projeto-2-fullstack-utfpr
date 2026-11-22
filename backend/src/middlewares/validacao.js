@@ -1,10 +1,5 @@
-// Funções de validação, normalização e utilitários de data/dinheiro
-// usados pelas rotas (validação e sanitização no servidor).
 const { erros } = require('./errorHandler');
 
-/* ------------------------------------------------------------------ */
-/* Coletor de erros por campo                                          */
-/* ------------------------------------------------------------------ */
 class Validador {
   constructor() {
     this.campos = {};
@@ -19,25 +14,27 @@ class Validador {
     return Object.keys(this.campos).length === 0;
   }
 
-  /** Lança 400 com o mapa de erros, se houver algum */
+  /**
+   * Lança erro HTTP 400 com o mapa de campos inválidos caso exista algum erro registrado.
+   * @param {string} [mensagem='Dados inválidos. Verifique os campos.']
+   * @throws {import('./errorHandler').AppError}
+   */
   verificar(mensagem = 'Dados inválidos. Verifique os campos.') {
     if (!this.valido) throw erros.validacao(this.campos, mensagem);
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Texto                                                              */
-/* ------------------------------------------------------------------ */
-/** Remove espaços extras e caracteres de controle. Retorna '' se não for string. */
+/**
+ * Remove espaços excedentes e caracteres de controle.
+ * @param {*} valor
+ * @returns {string} Texto sanitizado ou string vazia se não for string.
+ */
 function limparTexto(valor) {
   if (typeof valor !== 'string') return '';
   // eslint-disable-next-line no-control-regex
   return valor.replace(/[\u0000-\u001F\u007F]/g, '').replace(/\s+/g, ' ').trim();
 }
 
-/* ------------------------------------------------------------------ */
-/* E-mail                                                             */
-/* ------------------------------------------------------------------ */
 function normalizarEmail(email) {
   return limparTexto(email).toLowerCase();
 }
@@ -46,14 +43,15 @@ function emailValido(email) {
   return email.length <= 255 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 }
 
-/* ------------------------------------------------------------------ */
-/* CPF                                                                */
-/* ------------------------------------------------------------------ */
 function normalizarCpf(cpf) {
   return String(cpf ?? '').replace(/\D/g, '');
 }
 
-/** Valida CPF (11 dígitos, não repetidos e dígitos verificadores corretos) */
+/**
+ * Valida CPF com 11 dígitos numéricos, rejeitando sequências repetidas e conferindo os dígitos verificadores.
+ * @param {string} cpf
+ * @returns {boolean}
+ */
 function cpfValido(cpf) {
   if (!/^\d{11}$/.test(cpf)) return false;
   if (/^(\d)\1{10}$/.test(cpf)) return false;
@@ -69,22 +67,21 @@ function cpfValido(cpf) {
   return calcularDv(9) === digitos[9] && calcularDv(10) === digitos[10];
 }
 
-/* ------------------------------------------------------------------ */
-/* Senha                                                              */
-/* ------------------------------------------------------------------ */
-/** Mínimo 8 caracteres, com pelo menos uma letra e um número */
+/**
+ * Verifica se a senha possui entre 8 e 72 caracteres, com ao menos uma letra e um número.
+ * @param {*} senha
+ * @returns {boolean}
+ */
 function senhaValida(senha) {
   return typeof senha === 'string' && senha.length >= 8 && senha.length <= 72
     && /[A-Za-zÀ-ÿ]/.test(senha) && /\d/.test(senha);
 }
 
-/* ------------------------------------------------------------------ */
-/* Dinheiro (sempre em centavos inteiros)                             */
-/* ------------------------------------------------------------------ */
 /**
- * Converte um valor monetário em centavos inteiros, sem usar aritmética de float.
- * Aceita número (123.45) ou string ("123.45", "123,45", "1.234,56", "R$ 1.234,56").
- * Retorna null se inválido.
+ * Converte um valor monetário em centavos inteiros sem aritmética de ponto flutuante.
+ * Aceita número (`123.45`) ou string (`"123.45"`, `"123,45"`, `"1.234,56"`, `"R$ 1.234,56"`).
+ * @param {number|string|null|undefined} valor
+ * @returns {number|null} Valor em centavos ou `null` se inválido.
  */
 function paraCentavos(valor) {
   if (valor === null || valor === undefined || valor === '') return null;
@@ -96,7 +93,6 @@ function paraCentavos(valor) {
   } else if (typeof valor === 'string') {
     texto = valor.replace(/R\$|\s/g, '');
     if (texto.includes(',')) {
-      // formato brasileiro: pontos de milhar e vírgula decimal
       texto = texto.replace(/\./g, '').replace(',', '.');
     }
   } else {
@@ -111,38 +107,53 @@ function paraCentavos(valor) {
   return sinal === '-' ? -centavos : centavos;
 }
 
-/** Centavos -> reais (número com 2 casas) apenas para serialização na resposta */
+/**
+ * Converte centavos inteiros para reais (número com duas casas) para serialização na resposta.
+ * @param {number|null|undefined} centavos
+ * @returns {number}
+ */
 function paraReais(centavos) {
   return Number(centavos || 0) / 100;
 }
 
-/* ------------------------------------------------------------------ */
-/* Inteiros e ids                                                     */
-/* ------------------------------------------------------------------ */
 function inteiro(valor) {
   if (typeof valor === 'number' && Number.isInteger(valor)) return valor;
   if (typeof valor === 'string' && /^-?\d+$/.test(valor.trim())) return Number(valor.trim());
   return null;
 }
 
-/** Converte :id da URL; ids inválidos geram 404 (não revelam nada sobre outros registros) */
+/**
+ * Converte o parâmetro `:id` da URL para inteiro positivo, lançando HTTP 404 se inválido.
+ * @param {string|number} valor
+ * @returns {number}
+ * @throws {import('./errorHandler').AppError}
+ */
 function idDaUrl(valor) {
   const id = inteiro(valor);
   if (!id || id <= 0 || id > 2147483647) throw erros.naoEncontrado();
   return id;
 }
 
-/* ------------------------------------------------------------------ */
-/* Datas (strings 'AAAA-MM-DD', sem fuso)                              */
-/* ------------------------------------------------------------------ */
 const pad = (n) => String(n).padStart(2, '0');
 
+/**
+ * Retorna o último dia do mês informado.
+ * @param {number} ano
+ * @param {number} mes Mês de 1 a 12.
+ * @returns {number}
+ */
 function ultimoDiaDoMes(ano, mes) {
-  // mes: 1-12
   return new Date(Date.UTC(ano, mes, 0)).getUTCDate();
 }
 
-/** Monta 'AAAA-MM-DD' ajustando o dia para o último dia do mês, se necessário. mes pode "transbordar". */
+/**
+ * Monta uma data `AAAA-MM-DD`, ajustando dias inexistentes para o último dia do mês.
+ * Aceita valores de `mes` fora de 1-12 (transbordo de ano).
+ * @param {number} ano
+ * @param {number} mes
+ * @param {number} dia
+ * @returns {string}
+ */
 function criarData(ano, mes, dia) {
   const total = ano * 12 + (mes - 1);
   const a = Math.floor(total / 12);
@@ -156,7 +167,11 @@ function partes(iso) {
   return { ano, mes, dia };
 }
 
-/** Valida 'AAAA-MM-DD' e confere se a data existe no calendário */
+/**
+ * Valida se a string está no formato `AAAA-MM-DD` e corresponde a uma data existente no calendário.
+ * @param {*} valor
+ * @returns {boolean}
+ */
 function dataValida(valor) {
   if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
   const { ano, mes, dia } = partes(valor);
@@ -197,8 +212,10 @@ function fimDoMes(iso) {
 }
 
 /**
- * Lê ?inicio=&fim= da query. Padrão: mês corrente.
- * Lança 400 se as datas forem inválidas ou invertidas.
+ * Lê e valida `?inicio=&fim=` da query string, usando o mês corrente como padrão.
+ * @param {{ inicio?: string, fim?: string }} query
+ * @returns {{ inicio: string, fim: string }}
+ * @throws {import('./errorHandler').AppError} HTTP 400 se as datas forem inválidas, invertidas ou excederem 5 anos.
  */
 function periodoDaQuery(query) {
   const v = new Validador();

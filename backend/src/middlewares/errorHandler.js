@@ -1,12 +1,8 @@
-// Tratamento de erros centralizado.
-// Todas as respostas de erro seguem o formato único:
-//   { "erro": "mensagem geral", "campos": { "campo": "mensagem do campo" } }
-
 class AppError extends Error {
   /**
-   * @param {number} status  código HTTP
-   * @param {string} mensagem mensagem geral
-   * @param {Object<string,string>} campos erros por campo
+   * @param {number} status Código HTTP da resposta.
+   * @param {string} mensagem Mensagem geral do erro.
+   * @param {Object<string, string>} [campos={}] Mapa de erros por campo.
    */
   constructor(status, mensagem, campos = {}) {
     super(mensagem);
@@ -22,7 +18,6 @@ const erros = {
   conflito: (mensagem, campos = {}) => new AppError(409, mensagem, campos),
 };
 
-// Converte violações de restrições do PostgreSQL em respostas amigáveis
 const RESTRICOES_UNICAS = {
   usuarios_email_key: { campo: 'email', mensagem: 'E-mail já cadastrado.' },
   usuarios_cpf_key: { campo: 'cpf', mensagem: 'CPF já cadastrado.' },
@@ -30,6 +25,11 @@ const RESTRICOES_UNICAS = {
   fontes_destinos_usuario_nome_uk: { campo: 'nome', mensagem: 'Já existe uma fonte/destino com este nome.' },
 };
 
+/**
+ * Converte erros de restrição do PostgreSQL em instâncias de `AppError`.
+ * @param {Error & { code?: string, constraint?: string }} erro
+ * @returns {AppError | null}
+ */
 function traduzirErroBanco(erro) {
   if (erro.code === '23505') {
     const info = RESTRICOES_UNICAS[erro.constraint];
@@ -45,17 +45,27 @@ function traduzirErroBanco(erro) {
   return null;
 }
 
-// Envolve handlers async para que erros (rejeições) cheguem ao tratador central
+/**
+ * Envolve um handler assíncrono do Express encaminhando rejeições para `next`.
+ * @param {import('express').RequestHandler} fn
+ * @returns {import('express').RequestHandler}
+ */
 const capturar = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
-// 404 para rotas inexistentes
 function rotaNaoEncontrada(req, res, next) {
   next(new AppError(404, `Rota ${req.method} ${req.originalUrl} não encontrada.`));
 }
 
+/**
+ * Middleware centralizado de tratamento de erros no formato `{ erro, campos }`.
+ * @param {Error} erro
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ * @returns {import('express').Response}
+ */
 // eslint-disable-next-line no-unused-vars
 function tratadorDeErros(erro, req, res, next) {
-  // JSON malformado no corpo
   if (erro.type === 'entity.parse.failed') {
     return res.status(400).json({ erro: 'JSON inválido no corpo da requisição.', campos: {} });
   }
