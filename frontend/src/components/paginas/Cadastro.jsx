@@ -44,7 +44,6 @@ export default function Cadastro() {
       await cadastrar({ ...form, nome: form.nome.trim(), email: form.email.trim() });
       navegar('/', { replace: true });
     } catch (erro) {
-      // 409: o servidor indica qual campo (e-mail e/ou CPF) já está em uso
       setErros(erro.campos || {});
       setErroGeral(erro.message);
     } finally {

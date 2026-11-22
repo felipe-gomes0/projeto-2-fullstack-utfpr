@@ -1,4 +1,3 @@
-// Relatórios: por categoria (RF7) e por fonte/destino (RF8)
 import { useState } from 'react';
 import {
   Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -18,7 +17,6 @@ import {
 function Variacao({ valor, inverter = false }) {
   if (valor === null || valor === undefined) return <span className="texto-suave">—</span>;
   const subiu = valor > 0;
-  // para saídas, subir é ruim (vermelho); para entradas, subir é bom
   const bom = inverter ? !subiu : subiu;
   if (valor === 0) return <span className="texto-suave">0%</span>;
   return <span className={bom ? 'valor-positivo' : 'valor-negativo'}>{subiu ? '▲' : '▼'} {percentual(Math.abs(valor))}</span>;

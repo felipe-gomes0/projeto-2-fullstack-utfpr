@@ -1,9 +1,11 @@
-// Seletor de período: navegação por mês ou intervalo personalizado
 import { useState } from 'react';
 import { limitesDoMes, mesAno, mesAtual, somarMesesRef } from '../../services/formatadores';
 
 /**
- * valor: { inicio, fim }  |  aoMudar({ inicio, fim })
+ * Seletor de período com navegação mensal ou intervalo personalizado.
+ * @param {Object} props
+ * @param {{ inicio: string, fim: string }} props.valor
+ * @param {(periodo: { inicio: string, fim: string }) => void} props.aoMudar
  */
 export default function Periodo({ valor, aoMudar }) {
   const refDoValor = valor.inicio.slice(0, 7);

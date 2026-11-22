@@ -1,4 +1,3 @@
-// Controles de paginação
 export default function Paginacao({ pagina, totalPaginas, total, aoMudar }) {
   if (!totalPaginas || totalPaginas <= 1) {
     return total ? <p className="paginacao-info">{total} registro(s)</p> : null;

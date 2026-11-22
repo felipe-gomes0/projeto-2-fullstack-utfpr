@@ -1,4 +1,3 @@
-// Janela modal simples e acessível (fecha com Esc ou clique no fundo)
 import { useEffect, useRef } from 'react';
 
 export default function Modal({ titulo, aberto, aoFechar, children, largura = 520 }) {
@@ -33,7 +32,6 @@ export default function Modal({ titulo, aberto, aoFechar, children, largura = 52
   );
 }
 
-/** Diálogo de confirmação com botões personalizáveis */
 export function Confirmacao({ aberto, titulo, mensagem, botoes, aoFechar, erro }) {
   return (
     <Modal titulo={titulo} aberto={aberto} aoFechar={aoFechar} largura={460}>

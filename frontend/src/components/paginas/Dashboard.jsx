@@ -1,4 +1,3 @@
-// Dashboard: resumo do mês corrente
 import { Link } from 'react-router-dom';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { useAuth } from '../../contexts/AuthContext';

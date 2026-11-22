@@ -1,4 +1,3 @@
-// Estrutura das telas autenticadas: menu lateral + conteúdo
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';

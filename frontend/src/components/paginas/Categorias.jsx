@@ -1,4 +1,3 @@
-// CRUD de categorias
 import { useState } from 'react';
 import { api } from '../../services/api';
 import { useRequisicao } from '../../services/useRequisicao';
@@ -58,7 +57,7 @@ function CategoriaForm({ inicial, aoSalvar, aoCancelar }) {
 
 export default function Categorias() {
   const { dados, carregando, erro, recarregar } = useRequisicao(() => api.get('/categorias'), []);
-  const [form, setForm] = useState(null); // null | { inicial }
+  const [form, setForm] = useState(null);
   const [excluindo, setExcluindo] = useState(null);
   const [sucesso, setSucesso] = useState('');
 

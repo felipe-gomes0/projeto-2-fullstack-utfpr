@@ -1,4 +1,3 @@
-// Formulário de criação/edição de lançamento (com parcelamento no cartão)
 import { useMemo, useState } from 'react';
 import { api } from '../../services/api';
 import {
@@ -39,7 +38,6 @@ export default function LancamentoForm({ inicial, categorias, fontes, aoSalvar, 
   const alterar = (campo) => (e) => {
     const valor = e?.target ? e.target.value : e;
     const novo = { ...form, [campo]: valor };
-    // ao trocar o tipo, a categoria anterior pode deixar de ser compatível
     if (campo === 'tipo') {
       const cat = categorias.find((c) => String(c.id) === form.categoriaId);
       if (cat && cat.tipo !== valor) novo.categoriaId = '';
@@ -70,7 +68,7 @@ export default function LancamentoForm({ inicial, categorias, fontes, aoSalvar, 
     const corpo = {
       tipo: form.tipo,
       descricao: form.descricao.trim(),
-      valor: form.valor, // "1.234,56" -> o servidor converte para centavos
+      valor: form.valor,
       data: form.data,
       categoriaId: Number(form.categoriaId),
       fonteDestinoId: Number(form.fonteDestinoId),

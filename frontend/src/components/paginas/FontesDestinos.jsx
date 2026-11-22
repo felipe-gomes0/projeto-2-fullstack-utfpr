@@ -1,4 +1,3 @@
-// CRUD de fontes/destinos (renda, conta, cartão de crédito)
 import { useState } from 'react';
 import { api } from '../../services/api';
 import { useRequisicao } from '../../services/useRequisicao';

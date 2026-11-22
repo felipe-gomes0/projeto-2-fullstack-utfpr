@@ -28,7 +28,6 @@ h3 { font-size: 0.98rem; }
 a { color: var(--cor-primaria); }
 button, input, select { font: inherit; color: inherit; }
 
-/* ---------------- layout ---------------- */
 .app { display: flex; min-height: 100vh; }
 .menu {
   width: 240px; flex-shrink: 0; background: #0f1f1c; color: #d6e3e0;
@@ -60,7 +59,6 @@ button, input, select { font: inherit; color: inherit; }
 .cabecalho-pagina { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
 .subtitulo { margin: 4px 0 0; color: var(--cor-texto-suave); }
 
-/* ---------------- blocos ---------------- */
 .painel {
   background: var(--cor-superficie); border: 1px solid var(--cor-borda); border-radius: var(--raio);
   padding: 18px 20px; box-shadow: var(--sombra); margin-bottom: 18px; min-width: 0;
@@ -83,7 +81,6 @@ button, input, select { font: inherit; color: inherit; }
 .tom-negativo .cartao-valor-numero { color: var(--cor-negativo); }
 .cartao-valor-detalhe { font-size: 0.8rem; color: var(--cor-texto-suave); }
 
-/* ---------------- botões ---------------- */
 .botao {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   border-radius: 8px; padding: 9px 16px; border: 1px solid transparent; cursor: pointer;
@@ -105,7 +102,6 @@ button, input, select { font: inherit; color: inherit; }
 .botao-icone { background: none; border: 1px solid var(--cor-borda); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 1.15rem; line-height: 1; }
 .botao-icone:hover { background: #f0f3f2; }
 
-/* ---------------- formulários ---------------- */
 .form { display: flex; flex-direction: column; gap: 14px; }
 .campo { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .campo label { font-size: 0.86rem; font-weight: 600; color: #34413e; }
@@ -137,7 +133,6 @@ button, input, select { font: inherit; color: inherit; }
 .seletor-inline { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--cor-texto-suave); }
 .seletor-inline select { width: auto; }
 
-/* ---------------- filtros / período ---------------- */
 .filtros { display: flex; flex-direction: column; gap: 12px; }
 .filtros-campos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: 10px; align-items: center; }
 .periodo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -147,7 +142,6 @@ button, input, select { font: inherit; color: inherit; }
 .periodo-intervalo label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--cor-texto-suave); }
 .periodo-intervalo input { width: auto; }
 
-/* ---------------- tabelas ---------------- */
 .tabela-rolagem { overflow-x: auto; }
 .tabela { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
 .tabela th { text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--cor-texto-suave); font-weight: 600; padding: 8px 10px; border-bottom: 1px solid var(--cor-borda); white-space: nowrap; }
@@ -184,13 +178,11 @@ button, input, select { font: inherit; color: inherit; }
 .lista-simples li:last-child { border-bottom: none; }
 .lista-simples small { display: block; color: var(--cor-texto-suave); font-size: 0.82rem; }
 
-/* ---------------- abas ---------------- */
 .abas { display: flex; gap: 4px; border-bottom: 1px solid var(--cor-borda); margin-bottom: 18px; }
 .abas button { border: none; background: none; padding: 10px 16px; font-weight: 600; color: var(--cor-texto-suave); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .abas button.ativo { color: var(--cor-primaria); border-bottom-color: var(--cor-primaria); }
 .abas-pequenas { margin-bottom: 14px; }
 
-/* ---------------- estados / alertas ---------------- */
 .estado { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 32px 16px; color: var(--cor-texto-suave); text-align: center; }
 .estado-erro { color: var(--cor-negativo); }
 .estado-erro span { color: var(--cor-texto-suave); }
@@ -203,7 +195,6 @@ button, input, select { font: inherit; color: inherit; }
 .alerta-sucesso { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
 .alerta-aviso { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
 
-/* ---------------- modal ---------------- */
 .modal-fundo { position: fixed; inset: 0; background: rgba(15, 25, 23, 0.45); display: grid; place-items: center; padding: 16px; z-index: 50; }
 .modal { background: #fff; border-radius: 12px; width: 100%; max-height: calc(100vh - 32px); overflow: auto; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25); }
 .modal-cabecalho { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--cor-borda); }
@@ -211,12 +202,10 @@ button, input, select { font: inherit; color: inherit; }
 .modal-corpo { padding: 18px 20px 20px; }
 .confirmacao-texto { margin: 0 0 14px; }
 
-/* ---------------- paginação ---------------- */
 .paginacao { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
 .paginacao-info { color: var(--cor-texto-suave); font-size: 0.86rem; margin: 10px 0 0; }
 .paginacao .paginacao-info { margin: 0; }
 
-/* ---------------- auth ---------------- */
 .tela-auth { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(135deg, #0f1f1c 0%, #134e48 100%); }
 .auth-painel { display: grid; grid-template-columns: 1fr 1.1fr; max-width: 900px; width: 100%; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3); }
 .auth-marca { background: var(--cor-primaria); color: #e6fffa; padding: 40px; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
@@ -227,7 +216,6 @@ button, input, select { font: inherit; color: inherit; }
 .auth-form h2 { font-size: 1.35rem; }
 .auth-rodape { text-align: center; color: var(--cor-texto-suave); font-size: 0.9rem; margin: 4px 0 0; }
 
-/* ---------------- faturas ---------------- */
 .cartao-topo { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; }
 .cartao-topo h2 { margin-bottom: 2px; }
 .cartao-topo p { margin: 0; font-size: 0.88rem; }
@@ -247,7 +235,6 @@ button, input, select { font: inherit; color: inherit; }
 .fatura-total { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
 .fatura-vazia { padding: 10px 16px; margin: 0; }
 
-/* ---------------- saúde financeira ---------------- */
 .grade-indicadores { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
 .indicador { background: #fff; border: 1px solid var(--cor-borda); border-radius: var(--raio); padding: 16px; border-top: 4px solid #cbd5d2; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 6px; }
 .indicador p { margin: 0; font-size: 0.85rem; color: var(--cor-texto-suave); }
@@ -271,7 +258,6 @@ button, input, select { font: inherit; color: inherit; }
 .lista-mini { margin: 0; padding-left: 18px; font-size: 0.85rem; }
 .dicas { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
 
-/* ---------------- responsivo ---------------- */
 @media (max-width: 1000px) {
   .grade-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .filtros-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }

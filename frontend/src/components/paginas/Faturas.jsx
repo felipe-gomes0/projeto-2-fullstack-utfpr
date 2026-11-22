@@ -1,4 +1,3 @@
-// Previsão de faturas de cartão de crédito (RF9)
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {

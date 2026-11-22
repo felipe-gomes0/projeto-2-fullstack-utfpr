@@ -1,12 +1,15 @@
-// Diálogo de exclusão que, se o registro tiver lançamentos, pede um destino para movê-los
 import { useEffect, useState } from 'react';
 import Modal from './Modal';
 import { AlertaErro } from './Estados';
 
 /**
- * registro: { id, nome, totalLancamentos }
- * opcoesDestino: [{ id, nome }]  (já filtradas: mesmo tipo, exceto o próprio registro)
- * excluir(moverParaId|null) => Promise
+ * Diálogo de exclusão que solicita um destino para mover lançamentos vinculados quando necessário.
+ * @param {Object} props
+ * @param {{ id: number, nome: string, totalLancamentos?: number } | null} props.registro
+ * @param {string} props.rotuloEntidade
+ * @param {Array<{ id: number, nome: string }>} props.opcoesDestino
+ * @param {(moverParaId: number|null) => Promise<void>} props.excluir
+ * @param {() => void} props.aoFechar
  */
 export default function ExcluirComMover({ registro, rotuloEntidade, opcoesDestino, excluir, aoFechar }) {
   const [destino, setDestino] = useState('');
@@ -32,7 +35,6 @@ export default function ExcluirComMover({ registro, rotuloEntidade, opcoesDestin
     try {
       await excluir(precisaMover ? Number(destino) : null);
     } catch (e) {
-      // 409: o servidor informa que há lançamentos vinculados
       if (e.status === 409 && e.campos?.moverPara) setPrecisaMover(true);
       setErro(e.campos?.moverPara || e.message);
     } finally {

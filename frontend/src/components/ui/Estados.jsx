@@ -1,5 +1,3 @@
-// Estados padrão das telas que consomem a API: carregando, erro e lista vazia
-
 export function Carregando({ texto = 'Carregando...' }) {
   return (
     <div className="estado" role="status" aria-live="polite">
@@ -33,7 +31,6 @@ export function Vazio({ titulo = 'Nada por aqui ainda.', children }) {
   );
 }
 
-/** Mensagem geral de erro de formulário (vinda do servidor) */
 export function AlertaErro({ mensagem }) {
   if (!mensagem) return null;
   return <div className="alerta alerta-erro" role="alert">{mensagem}</div>;

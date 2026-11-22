@@ -1,4 +1,3 @@
-// Lançamentos: listagem com filtros, paginação, totais e CRUD
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../../services/api';
@@ -36,7 +35,6 @@ export default function Lancamentos() {
     [periodo.inicio, periodo.fim, filtros.tipo, filtros.categoriaId, filtros.fonteDestinoId, filtros.busca, pagina],
   );
 
-  // busca por descrição com pequeno atraso (debounce)
   useEffect(() => {
     const t = setTimeout(() => {
       setFiltros((f) => (f.busca === busca ? f : { ...f, busca }));

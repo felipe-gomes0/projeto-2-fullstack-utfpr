@@ -1,4 +1,3 @@
-// Campo de formulário com rótulo e mensagem de erro (do cliente ou do servidor)
 import { useId } from 'react';
 import { mascaraMoeda } from '../../services/formatadores';
 
@@ -17,7 +16,6 @@ export function Campo({ rotulo, erro, ajuda, children, className = '' }) {
   );
 }
 
-/** Input de texto simples com rótulo e erro */
 export function CampoTexto({ rotulo, erro, ajuda, className, ...props }) {
   return (
     <Campo rotulo={rotulo} erro={erro} ajuda={ajuda} className={className}>
@@ -26,7 +24,16 @@ export function CampoTexto({ rotulo, erro, ajuda, className, ...props }) {
   );
 }
 
-/** Input monetário com máscara (digite apenas números: 12345 -> 123,45) */
+/**
+ * Campo monetário com máscara baseada em centavos (ex.: `"12345"` → `"123,45"`).
+ * @param {Object} props
+ * @param {string} [props.rotulo]
+ * @param {string} [props.erro]
+ * @param {string} [props.ajuda]
+ * @param {string} props.value
+ * @param {(valorMascarado: string) => void} props.onChange
+ * @param {string} [props.className]
+ */
 export function CampoMoeda({ rotulo, erro, ajuda, value, onChange, className, ...props }) {
   return (
     <Campo rotulo={rotulo} erro={erro} ajuda={ajuda} className={className}>

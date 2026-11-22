@@ -1,4 +1,3 @@
-// Cartões com totais de entradas, saídas e saldo
 import { moeda } from '../../services/formatadores';
 
 export function CartaoValor({ titulo, valor, tom = 'neutro', detalhe }) {

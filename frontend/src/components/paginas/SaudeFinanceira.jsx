@@ -1,4 +1,3 @@
-// Desafio: saúde financeira (indicadores calculados no back-end)
 import {
   Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
@@ -87,7 +86,6 @@ export default function SaudeFinanceira() {
         </div>
       </header>
 
-      {/* Aviso obrigatório, sempre visível */}
       <div className="alerta alerta-aviso" role="note">
         <strong>Aviso:</strong> {dados?.aviso || 'Conteúdo educativo. Não constitui recomendação financeira profissional.'}
       </div>
