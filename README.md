@@ -44,10 +44,14 @@ Enunciado: <https://costasilvati.github.io/fullStack/projeto-2.html>
 │   ├── Dockerfile              # build com Vite + nginx
 │   ├── nginx.conf
 │   └── .env.example
-└── docker-compose.yml          # PostgreSQL + API + front-end
+├── docker-compose.yml          # PostgreSQL + API + front-end (valores padrão)
+├── docker-compose.env.yml      # mesmo compose, lendo backend/.env e frontend/.env
+└── configurar.js               # cria os .env com portas livres
 ```
 
 ---
+
+O projeto pode ser executado **sem Docker** (linha de comando, Node.js + PostgreSQL) ou **com Docker**. Nos dois casos, as portas e demais configurações ficam em `backend/.env` e `frontend/.env` (veja [Variáveis de ambiente](#variáveis-de-ambiente) e [Portas](#portas)).
 
 ## Como executar com Docker
 
@@ -57,11 +61,24 @@ Requer Docker com o Docker Compose. Na raiz do projeto:
 docker compose up --build
 ```
 
+Sem nenhum `.env`, o compose usa os valores padrão:
+
 | Serviço | Endereço |
 |---|---|
 | Front-end | http://localhost:5173 |
 | API | http://localhost:3001/api |
-| PostgreSQL | `localhost:5433` (usuário `postgres`, senha `postgres`, banco `financas`) |
+| PostgreSQL | `localhost:5432` (usuário `postgres`, senha `postgres`, banco `financas`) |
+
+Se alguma dessas portas já estiver ocupada na sua máquina, configure o ambiente automaticamente (requer Node.js):
+
+```bash
+node configurar.js
+docker compose up --build
+```
+
+O `configurar.js` cria `backend/.env` e `frontend/.env` a partir dos `.env.example`, escolhendo portas livres a partir das padrão e gerando um `JWT_SECRET` aleatório. Arquivos que já existem são mantidos (use `node configurar.js --forcar` para recriá-los). Ele também cria um `.env` na raiz com `COMPOSE_FILE=docker-compose.env.yml`. Esse arquivo faz todos os comandos `docker compose` (`up`, `down`, `logs`, `exec`...) lerem `backend/.env` e `frontend/.env`, sem nenhuma flag extra.
+
+Para fazer o mesmo à mão: crie os dois `.env` a partir dos `.env.example` e rode `docker compose -f docker-compose.env.yml up --build`.
 
 Na primeira subida o PostgreSQL executa o `schema.sql` e a API roda o seed (2 usuários com lançamentos de exemplo). Nas próximas, os dados são mantidos no volume `pgdata` e o seed é ignorado.
 
@@ -75,25 +92,23 @@ Na primeira subida o PostgreSQL executa o `schema.sql` e a API roda o seed (2 us
 
 ---
 
-## Como executar (linha de comando)
+## Como executar (linha de comando, sem Docker)
+
+Requer Node.js 18+ e um PostgreSQL 14+.
 
 ### 1. Banco de dados
 
-Tenha um PostgreSQL rodando (local ou Docker). Exemplo com Docker:
-
-```bash
-docker run --name financas-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
-```
+Tenha um PostgreSQL rodando e anote host, porta, usuário e senha. Eles vão no `backend/.env` (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`). Não é preciso criar o banco `financas`: o `npm run db:schema` cria se ele não existir.
 
 ### 2. Back-end
 
 ```bash
 cd backend
-cp .env.example .env        # ajuste usuário/senha do banco e gere um JWT_SECRET
+cp .env.example .env        # ajuste os dados do banco, a porta da API e gere um JWT_SECRET
 npm install
 npm run db:schema           # cria o banco "financas" (se não existir) e as tabelas
 npm run db:seed             # popula com 2 usuários e lançamentos de exemplo
-npm run dev                 # API em http://localhost:3001/api
+npm run dev                 # API em http://localhost:<PORT>/api (padrão 3001)
 ```
 
 Outros scripts:
@@ -114,9 +129,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 
 ```bash
 cd frontend
-cp .env.example .env        # VITE_API_URL=http://localhost:3001/api
+cp .env.example .env        # FRONTEND_PORT e VITE_API_URL
 npm install
-npm run dev                 # http://localhost:5173
+npm run dev                 # http://localhost:<FRONTEND_PORT> (padrão 5173)
 ```
 
 ### Usuários do seed
@@ -146,11 +161,40 @@ As datas do seed são relativas ao dia em que ele é executado, então sempre h�
 
 **frontend/.env**
 
-| Variável | Exemplo |
-|---|---|
-| `VITE_API_URL` | `http://localhost:3001/api` |
+| Variável | Exemplo | Descrição |
+|---|---|---|
+| `FRONTEND_PORT` | `5173` | porta do front-end (Vite no `npm run dev`/`npm run preview` e nginx no Docker) |
+| `VITE_API_URL` | `http://localhost:3001/api` | endereço da API usado pelo navegador |
 
 Os arquivos `.env` estão no `.gitignore`; apenas os `.env.example` são versionados.
+
+### Portas
+
+| Porta | Variável | Arquivo | Valores que precisam acompanhar |
+|---|---|---|---|
+| API | `PORT` | `backend/.env` | a porta em `VITE_API_URL` (`frontend/.env`) |
+| Front-end | `FRONTEND_PORT` | `frontend/.env` | a porta em `CORS_ORIGIN` (`backend/.env`) |
+| Banco | `DB_PORT` | `backend/.env` | — |
+
+Exemplo, se 3001 e 5432 já estiverem em uso na sua máquina:
+
+```ini
+# backend/.env
+PORT=3002
+DB_PORT=5433
+CORS_ORIGIN=http://localhost:5173
+
+# frontend/.env
+FRONTEND_PORT=5173
+VITE_API_URL=http://localhost:3002/api
+```
+
+As mesmas variáveis valem com e sem Docker:
+
+- **Sem Docker**, a API lê o `backend/.env` e o Vite lê o `frontend/.env`. `DB_PORT` é a porta do seu PostgreSQL.
+- **Com Docker** (via `docker-compose.env.yml`, ativado pelo `.env` da raiz), o compose publica a API em `PORT`, o front-end em `FRONTEND_PORT` e o banco em `DB_PORT` na sua máquina. Dentro da rede do Docker, a API sempre acessa o banco em `db:5432`, então `DB_HOST` é ignorado. Depois do `docker compose up`, também dá para rodar `npm run db:reset` direto do `backend/` na sua máquina, sem entrar no contêiner.
+
+`VITE_API_URL` é embutida no front-end no momento do build. No Docker, depois de alterá-la, rode o `up` com `--build`.
 
 ---
 
