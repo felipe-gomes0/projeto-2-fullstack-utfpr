@@ -1,4 +1,3 @@
-// Ponto de entrada da API
 const express = require('express');
 const cors = require('cors');
 const config = require('./config/env');
@@ -17,10 +16,8 @@ const app = express();
 
 app.disable('x-powered-by');
 
-// CORS restrito à origem do front-end
 app.use(cors({
   origin(origem, callback) {
-    // requisições sem Origin (curl, Postman) não são afetadas pelo CORS do navegador
     if (!origem || config.corsOrigem.includes(origem)) return callback(null, true);
     return callback(null, false);
   },
@@ -30,7 +27,6 @@ app.use(cors({
 
 app.use(express.json({ limit: '100kb' }));
 
-// Healthcheck simples (público)
 app.get('/api/status', async (req, res, next) => {
   try {
     await pool.query('SELECT 1');
@@ -40,10 +36,8 @@ app.get('/api/status', async (req, res, next) => {
   }
 });
 
-// Rotas públicas: cadastro e login (o /me exige token dentro do próprio router)
 app.use('/api/auth', authRoutes);
 
-// Todas as demais rotas sob /api exigem token
 app.use('/api/categorias', autenticar, categoriaRoutes);
 app.use('/api/fontes-destinos', autenticar, fonteDestinoRoutes);
 app.use('/api/lancamentos', autenticar, lancamentoRoutes);

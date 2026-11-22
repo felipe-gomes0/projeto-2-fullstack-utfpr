@@ -1,4 +1,3 @@
-// Carrega e valida as variáveis de ambiente (.env)
 require('dotenv').config();
 
 const obrigatorias = ['DB_HOST', 'DB_USER', 'DB_NAME', 'JWT_SECRET'];
